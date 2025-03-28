@@ -32,7 +32,6 @@
             android:layout_marginRight="10dp"
             android:background="@drawable/plus"
             ></ImageButton>
-
     </LinearLayout>
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
@@ -58,10 +57,4 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
     </androidx.recyclerview.widget.RecyclerView>
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?android:attr/windowBackground"
-        app:menu="@menu/bottom_nav_menu"
-        ></com.google.android.material.bottomnavigation.BottomNavigationView>
 </LinearLayout>
