@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="horizontal"
     android:layout_width="match_parent"
+    android:layout_marginBottom="20dp"
     android:layout_height="wrap_content">
 
     <androidx.cardview.widget.CardView
@@ -44,7 +45,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_marginLeft="100dp"
+        android:layout_gravity="end"
         >
         <TextView
             android:id="@+id/txtTimeChat"

@@ -1,45 +1,39 @@
 package com.project.chatapp;
 
 import android.os.Bundle;
-
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
-
 import com.project.chatapp.databinding.ActivityChatsBinding;
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class ChatsActivity extends AppCompatActivity {
-    private ActivityChatsBinding binding ;
-    private List<ChatsModel> listChats ;
-    private List<StoryModel> listStory ;
-    private CustomAdapterRVStory adapterStory ;
-    private CustomAdapterRVChats adapterChat ;
+    private ActivityChatsBinding binding;
+    private List<ChatsModel> listChats;
+    private List<StoryModel> listStory;
+    private CustomAdapterRVStory adapterStory;
+    private CustomAdapterRVChats adapterChat;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
-        binding = ActivityChatsBinding.inflate(getLayoutInflater()) ;
+        binding = ActivityChatsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        listStory = new ArrayList<>() ;
-        listStory.add(new StoryModel(R.drawable.pic1,"tom")) ;
-        listStory.add(new StoryModel(R.drawable.pic2,"meo")) ;
-        listStory.add(new StoryModel(R.drawable.pic3,"cho")) ;
+        listStory = new ArrayList<>();
+        listStory.add(new StoryModel(R.drawable.pic1, "tom"));
+        listStory.add(new StoryModel(R.drawable.pic2, "meo"));
+        listStory.add(new StoryModel(R.drawable.pic3, "cho"));
 
         adapterStory = new CustomAdapterRVStory(listStory);
-        binding.rvStory.setLayoutManager(new LinearLayoutManager(this , LinearLayoutManager.HORIZONTAL , false));
+        binding.rvStory.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         binding.rvStory.setAdapter(adapterStory);
 
-
-        listChats = new ArrayList<>() ;
-        listChats.add(new ChatsModel(R.drawable.pic1,true,"My crush" , "Em an com chua?" , "now" , 1));
-        listChats.add(new ChatsModel(R.drawable.pic2,true,"Peter" , "Em an com chua?" , "tomorrow" , 0));
-        adapterChat = new CustomAdapterRVChats(listChats) ;
-        binding.rvChats.setLayoutManager(new LinearLayoutManager(this , LinearLayoutManager.HORIZONTAL , false));
+        listChats = new ArrayList<>();
+        listChats.add(new ChatsModel(R.drawable.pic1, true, "My crush", "Em an com chua?", "now", 1));
+        listChats.add(new ChatsModel(R.drawable.pic2, true, "Peter", "Em an com chua?", "tomorrow", 0));
+        adapterChat = new CustomAdapterRVChats(listChats);
+        binding.rvChats.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         binding.rvChats.setAdapter(adapterChat);
-
     }
 }
