@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:fitsSystemWindows="true"
     android:id="@+id/main"
     android:background="@color/white"
@@ -25,30 +25,57 @@
         android:text="Chats"
         android:textStyle="bold"
         ></TextView>
+
     <ImageButton
         android:id="@+id/btnAddChats"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
         android:layout_gravity="end"
         android:layout_marginRight="10dp"
-        android:background="@drawable/chat_add"
-        ></ImageButton>
+        android:background="@drawable/chat_add"></ImageButton>
+
     <ImageButton
         android:id="@+id/btnTask"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
         android:layout_gravity="end"
         android:layout_marginRight="10dp"
-        android:background="@drawable/icon_tasks"
-        ></ImageButton>
+        android:background="@drawable/icon_tasks"></ImageButton>
   </LinearLayout>
   <androidx.recyclerview.widget.RecyclerView
+      android:layout_marginLeft="10dp"
       android:id="@+id/rvStory"
       android:padding="10dp"
       android:orientation="horizontal"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-
       ></androidx.recyclerview.widget.RecyclerView>
 
+  <com.google.android.material.textfield.TextInputLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:hint="Search"
+      app:endIconMode="clear_text"
+      style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/searchEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:drawableStart="@drawable/search_holder"
+        android:inputType="text"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:paddingStart="12dp"
+        android:background="@drawable/custom_search"
+        android:paddingEnd="12dp"/>
+  </com.google.android.material.textfield.TextInputLayout>
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvChats"
+        android:layout_marginLeft="10dp"
+        android:padding="10dp"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        ></androidx.recyclerview.widget.RecyclerView>
   </LinearLayout>
