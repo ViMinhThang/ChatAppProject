@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="OtpBoxStyle">
+        <item name="android:layout_width">20dp</item>
+        <item name="android:layout_height">20dp</item>
+        <item name="android:layout_margin">10dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:background">@drawable/otp_background</item>
+        <item name="android:inputType">number</item>
+        <item name="android:maxLength">1</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+    <style name="BlueButtonStyle" >
+        <item name="backgroundTint">@color/blue</item> <!-- màu nền -->
+        <item name="cornerRadius">20dp</item> <!-- bo góc -->
+        <item name="android:textColor">@android:color/white</item> <!-- chữ trắng -->
+        <item name="android:textStyle">bold</item>
+    </style>
+
+</resources>
