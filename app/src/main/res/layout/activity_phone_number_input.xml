@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:ccp="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F5F5F5"
+    android:padding="24dp">
+
+    <!-- Nút quay lại -->
+    <ImageView
+        android:id="@+id/ic_back"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/back"
+        android:contentDescription="Back button"/>
+    <!-- Tiêu đề -->
+    <TextView
+        android:id="@+id/tv_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/enter_phone_number"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="#000000"
+        android:gravity="center" />
+
+    <!-- Mô tả phụ -->
+
+    <!-- Nhập mã quốc gia và số điện thoại -->
+
+    <!-- Nút Tiếp tục -->
+
+    <TextView
+        android:id="@+id/tv_subtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text="@string/country_phone"
+        android:textColor="#666666"
+        android:textSize="14sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:orientation="horizontal"
+        android:background="#F5F6FA"
+        android:elevation="2dp"
+        android:padding="12dp"
+        android:layout_marginBottom="24dp">
+
+        <!-- Country Code Picker -->
+        <com.hbb20.CountryCodePicker
+            android:id="@+id/ccp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:ccp_showFlag="true"
+            app:ccp_showNameCode="false"
+            app:ccp_showFullName="false"
+            app:ccp_clickable="true"
+            app:ccp_showPhoneCode="true"
+            app:ccp_textSize="18sp"
+            app:ccp_padding="0dp"/>
+
+        <!-- Nhập số điện thoại -->
+        <EditText
+            android:id="@+id/et_phone_number"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:hint="@string/phone_number"
+            android:inputType="number"
+            android:textColor="#000000"
+            android:textSize="16sp"
+            android:background="@android:color/transparent" />
+    </LinearLayout>
+
+    <!-- Nút Tiếp tục -->
+    <Button
+        android:id="@+id/btn_continue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="#0066FF"
+        android:text="@string/contrinue"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:padding="12dp"
+        android:layout_marginBottom="24dp"
+        android:background="@drawable/button_rounded" />
+</LinearLayout>
