@@ -15,7 +15,6 @@ public class MainActivity extends AppCompatActivity {
     FrameLayout btnStartMessaging;
     TextView tvTerms;
 
-    @SuppressLint("WrongViewCast")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

@@ -1,5 +1,6 @@
 package com.project.chatapp;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -39,14 +40,8 @@ public class PhoneNumberActivity extends AppCompatActivity {
         btnContinue.setOnClickListener(view -> {
             String phoneCode = ccp.getSelectedCountryCodeWithPlus();
             String phoneNumber = etPhoneNumber.getText().toString();
-
-            if (phoneNumber.isEmpty()) {
-                Toast.makeText(this, "Vui lòng nhập số điện thoại của bạn", Toast.LENGTH_SHORT).show();
-            } else {
-                String fullPhoneNumber = phoneCode + " " + phoneNumber;
-                Toast.makeText(this, "Số điện thoại: " + fullPhoneNumber, Toast.LENGTH_SHORT).show();
-                // Tiếp tục logic xử lý (chuyển màn hình, xác thực...)
-            }
+            Intent intent = new Intent(this, LoginActivity.class);
+            startActivity(intent);
         });
     }
 }
