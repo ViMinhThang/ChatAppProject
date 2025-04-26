@@ -18,6 +18,7 @@ import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthOptions;
 import com.google.firebase.auth.PhoneAuthProvider;
 import com.project.chatapp.R;
+import com.project.chatapp.screen.chat.ChatsActivity;
 
 import java.util.concurrent.TimeUnit;
 
@@ -153,7 +154,7 @@ public class OTPVerifyActivity extends AppCompatActivity {
                     intent.putExtra("phoneNumber", phoneNumber);
                     startActivity(intent);
                 } else {
-                            startActivity(new Intent(this, MainActivity.class));
+                    startActivity(new Intent(this, ChatsActivity.class));
                 }
                 finish();
             } else {

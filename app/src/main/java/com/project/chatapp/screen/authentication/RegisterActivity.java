@@ -1,5 +1,6 @@
 package com.project.chatapp.screen.authentication;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -20,6 +21,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.project.chatapp.R;
+import com.project.chatapp.screen.chat.ChatsActivity;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +31,7 @@ public class RegisterActivity extends AppCompatActivity {
     ImageView avatar;
     Button btnRegister;
     private DatabaseReference usersRef;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -78,6 +81,8 @@ public class RegisterActivity extends AppCompatActivity {
 
                                     usersRef.child(newUserKey).setValue(newUser)
                                             .addOnSuccessListener(aVoid -> {
+                                                Intent intent = new Intent(RegisterActivity.this, ChatsActivity.class);
+                                                startActivity(intent);
                                                 Toast.makeText(RegisterActivity.this, "User created: " + newUserKey, Toast.LENGTH_SHORT).show();
                                             })
                                             .addOnFailureListener(e -> {
