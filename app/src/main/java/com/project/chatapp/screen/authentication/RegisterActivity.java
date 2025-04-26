@@ -82,6 +82,7 @@ public class RegisterActivity extends AppCompatActivity {
                                     usersRef.child(newUserKey).setValue(newUser)
                                             .addOnSuccessListener(aVoid -> {
                                                 Intent intent = new Intent(RegisterActivity.this, ChatsActivity.class);
+                                                intent.putExtra("userPhoneNumber", phoneNumber);
                                                 startActivity(intent);
                                                 Toast.makeText(RegisterActivity.this, "User created: " + newUserKey, Toast.LENGTH_SHORT).show();
                                             })

@@ -154,7 +154,9 @@ public class OTPVerifyActivity extends AppCompatActivity {
                     intent.putExtra("phoneNumber", phoneNumber);
                     startActivity(intent);
                 } else {
-                    startActivity(new Intent(this, ChatsActivity.class));
+                    Intent intent = new Intent(this, ChatsActivity.class);
+                    intent.putExtra("userPhoneNumber", phoneNumber);
+                    startActivity(intent);
                 }
                 finish();
             } else {

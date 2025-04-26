@@ -24,6 +24,8 @@ public class ContactsActivity extends AppCompatActivity {
         binding = ActivityContactsBinding.inflate(getLayoutInflater()) ;
         setContentView(binding.getRoot());
 
+
+
         contacts = new ArrayList<>() ;
         contacts.add(new ContactModel(R.drawable.pic1,"Vợ yêu 1" , "Last seen yesterday")) ;
         contacts.add(new ContactModel(R.drawable.pic2,"Vợ yêu 2" , "Online")) ;
