@@ -1,7 +1,8 @@
 <resources>
     <string name="app_name">ChatApp</string>
     <string name="welcome_title">Kết nối dễ dàng với\ngia đình và bạn bè\nkhắp các quốc gia</string>
-    <string name="terms_policy">Điều khoản &amp; Chính sách Bảo mật</string> <string name="start_messaging">Bắt đầu nhắn tin</string>
+    <string name="terms_policy">Điều khoản &amp; Chính sách Bảo mật</string>
+    <string name="start_messaging">Bắt đầu nhắn tin</string>
     <string name="illustration_desc">Illustration describing the app feature</string>
     <string name="start_messing">Bắt đầu trò chuyện</string>
     <string name="enter_phone_number">Nhập số điện thoại của bạn</string>

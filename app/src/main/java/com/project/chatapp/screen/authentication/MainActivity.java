@@ -1,14 +1,17 @@
-package com.project.chatapp; // Thay đổi package nếu cần
+package com.project.chatapp.screen.authentication; // Thay đổi package nếu cần
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.database.FirebaseDatabase;
+import com.project.chatapp.R;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -19,6 +22,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.hello);
+        FirebaseApp.initializeApp(this);
+        if (FirebaseApp.getApps(this).size() == 0) {
+            Log.d("FirebaseTest", "Firebase Not initialized");
+        } else {
+            Log.d("FirebaseTest", "Firebase Initialized Sucessfully");
+        }
+        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
 
         btnStartMessaging = findViewById(R.id.button_start);
         tvTerms = findViewById(R.id.terms_priva);

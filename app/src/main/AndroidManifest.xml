@@ -11,10 +11,14 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.ChatApp"
+        android:usesCleartextTraffic="true"
         tools:targetApi="31">
 
         <activity
-            android:name=".MainActivity"
+            android:name=".screen.authentication.RegisterActivity"
+            android:exported="false" />
+        <activity
+            android:name=".screen.authentication.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -22,16 +26,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
-            android:name=".PhoneNumberActivity"
-            android:exported="false"></activity>
+            android:name=".screen.authentication.PhoneNumberActivity"
+            android:exported="false" />
         <activity
-            android:name=".LoginActivity"
-            android:windowSoftInputMode="adjustResize">
-
-        </activity>
-
+            android:name=".screen.authentication.OTPVerifyActivity"
+            android:windowSoftInputMode="adjustResize"></activity>
     </application>
-
+    <uses-permission android:name="android.permission.INTERNET" />
 </manifest>

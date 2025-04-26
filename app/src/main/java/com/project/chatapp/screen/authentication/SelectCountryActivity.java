@@ -1,4 +1,4 @@
-package com.project.chatapp;
+package com.project.chatapp.screen.authentication;
 
 import android.os.Bundle;
 import android.text.Editable;
@@ -12,6 +12,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.hbb20.CountryCodePicker;
+import com.project.chatapp.R;
+import com.project.chatapp.model.Country.Country;
+import com.project.chatapp.model.Country.CountryAdapter;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.project.chatapp;
+package com.project.chatapp.model.Country;
 
 public class Country {
     private String name;
