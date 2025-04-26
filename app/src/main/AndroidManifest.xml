@@ -27,11 +27,23 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".screen.chat.ChatsActivity"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name=".screen.authentication.PhoneNumberActivity"
             android:exported="false" />
         <activity
             android:name=".screen.authentication.OTPVerifyActivity"
             android:windowSoftInputMode="adjustResize"></activity>
+        <activity
+            android:name=".screen.chat.ContactsActivity"
+            android:exported="false" />
     </application>
-    <uses-permission android:name="android.permission.INTERNET" />
+
 </manifest>

@@ -36,7 +36,6 @@ public class MainActivity extends AppCompatActivity {
         btnStartMessaging.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Chuyển sang màn hình nhập số điện thoại
                 Intent intent = new Intent(MainActivity.this, PhoneNumberActivity.class);
                 startActivity(intent);
             }

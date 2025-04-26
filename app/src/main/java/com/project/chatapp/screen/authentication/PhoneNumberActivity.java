@@ -2,6 +2,7 @@ package com.project.chatapp.screen.authentication;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -57,11 +58,13 @@ public class PhoneNumberActivity extends AppCompatActivity {
 
     private void checkUserExist(String phoneNumber) {
         DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
-        usersRef.child(phoneNumber).get().addOnSuccessListener(dataSnapshot -> {
+        usersRef.orderByChild("phone").equalTo("+84" + phoneNumber.substring(1)).get().
+                addOnSuccessListener(dataSnapshot -> {
             boolean isNewUser = !dataSnapshot.exists();
             sendOtp(phoneNumber, isNewUser);
         }).addOnFailureListener(e -> {
-            Toast.makeText(this, "Lỗi kiểm tra người dùng", Toast.LENGTH_SHORT).show();
+                    Log.d("Error",e.getMessage());
+            Toast.makeText(this, "Lỗi kiểm tra người dùng"+e.getMessage(), Toast.LENGTH_SHORT).show();
         });
     }
 

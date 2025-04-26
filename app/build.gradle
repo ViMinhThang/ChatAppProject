@@ -5,6 +5,10 @@ plugins {
 }
 
 android {
+    buildFeatures {
+        viewBinding = true
+    }
+
     namespace 'com.project.chatapp'
     compileSdk 35
 

@@ -153,7 +153,7 @@ public class OTPVerifyActivity extends AppCompatActivity {
                     intent.putExtra("phoneNumber", phoneNumber);
                     startActivity(intent);
                 } else {
-//                            startActivity(new Intent(this, HomeActivity.class));
+                            startActivity(new Intent(this, MainActivity.class));
                 }
                 finish();
             } else {
