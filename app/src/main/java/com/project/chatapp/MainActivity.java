@@ -2,24 +2,27 @@ package com.project.chatapp; // Thay đổi package nếu cần
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
 
-    Button btnStartMessaging;
+    FrameLayout btnStartMessaging;
     TextView tvTerms;
 
+    @SuppressLint("WrongViewCast")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.hello);
 
         btnStartMessaging = findViewById(R.id.button_start);
-        tvTerms = findViewById(R.id.terms_policy);
+        tvTerms = findViewById(R.id.terms_priva);
 
         btnStartMessaging.setOnClickListener(new View.OnClickListener() {
             @Override

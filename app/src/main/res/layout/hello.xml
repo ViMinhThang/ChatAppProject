@@ -9,8 +9,8 @@
 
     <ImageView
         android:id="@+id/illustration"
-        android:layout_width="262dp"
-        android:layout_height="271dp"
+        android:layout_width="250dp"
+        android:layout_height="260dp"
         android:layout_marginTop="120dp"
         android:adjustViewBounds="true"
         android:contentDescription="@string/illustration_desc"
@@ -23,12 +23,12 @@
 
     <TextView
         android:id="@+id/connect_eas"
-        android:layout_width="236dp"
-        android:layout_height="89dp"
-        android:layout_marginTop="40dp"
+        android:layout_width="220dp"
+        android:layout_height="70dp"
+        android:layout_marginTop="20dp"
         android:gravity="center"
         android:text="@string/welcome_title"
-        android:textSize="24dp"
+        android:textSize="20dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.496"
         app:layout_constraintStart_toStartOf="parent"
@@ -45,7 +45,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/connect_eas" />
 
-    <RelativeLayout
+    <FrameLayout
         android:id="@+id/button_start"
         android:layout_width="327dp"
         android:layout_height="52dp"
@@ -54,7 +54,7 @@
         app:layout_constraintTop_toBottomOf="@id/terms_priva"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="18dp">
+        android:layout_marginTop="10dp">
 
         <TextView
             android:id="@+id/tv_button_text"
@@ -64,6 +64,6 @@
             android:gravity="center"
             android:textColor="@android:color/white"
             android:textSize="16sp" />
-    </RelativeLayout>
+    </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
