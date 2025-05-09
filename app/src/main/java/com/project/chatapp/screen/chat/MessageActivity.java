@@ -1,4 +1,4 @@
-package com.project.chatapp.ui;
+package com.project.chatapp.screen.chat;
 
 import android.os.Bundle;
 import android.widget.EditText;
@@ -20,9 +20,8 @@ import com.project.chatapp.model.SettingNav;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
-public class AccountManagement extends AppCompatActivity {
+public class MessageActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private SettingAdapter adapter;
     private ChatApdater chatApdater;

@@ -1,4 +1,4 @@
-package com.project.chatapp.screen.authentication; // Thay đổi package nếu cần
+package com.project.chatapp.screen.authentication;
 
 import androidx.appcompat.app.AppCompatActivity;
 

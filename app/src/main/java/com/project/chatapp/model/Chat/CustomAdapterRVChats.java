@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.project.chatapp.R;
+import com.project.chatapp.screen.chat.MessageActivity;
 
 import java.util.List;
 
@@ -38,9 +39,9 @@ public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVCh
         holder.unread.setText(String.valueOf(chat.getUnread()));
 
         holder.itemView.setOnClickListener(v -> {
-//            Intent intent = new Intent(holder.itemView.getContext(),)
-//            intent.putExtra("userPhoneNumber", chat.getUserPhoneNumber()); // Pass the phone number or user ID
-//            holder.itemView.getContext().startActivity(intent);
+            Intent intent = new Intent(holder.itemView.getContext(), MessageActivity.class);
+            intent.putExtra("userPhoneNumber", chat.getUserPhoneNumber());
+            holder.itemView.getContext().startActivity(intent);
         });
     }
 

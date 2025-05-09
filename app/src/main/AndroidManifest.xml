@@ -13,12 +13,8 @@
         android:theme="@style/Theme.ChatApp"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
-
         <activity
-            android:name=".screen.authentication.RegisterActivity"
-            android:exported="false" />
-        <activity
-            android:name=".MainActivity"
+            android:name=".screen.authentication.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -27,20 +23,22 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".screen.authentication.RegisterActivity"
+            android:exported="false" />
+        <activity
+            android:name=".screen.chat.MessageActivity"
+            android:exported="true" />
+        <activity
             android:name=".screen.chat.ChatsActivity"
-            android:exported="true" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+            android:exported="true">
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
         <activity
             android:name=".screen.authentication.PhoneNumberActivity"
             android:exported="false" />
         <activity
             android:name=".screen.authentication.OTPVerifyActivity"
-            android:windowSoftInputMode="adjustResize"></activity>
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".screen.chat.ContactsActivity"
             android:exported="false" />

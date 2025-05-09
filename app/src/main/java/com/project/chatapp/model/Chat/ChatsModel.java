@@ -5,10 +5,14 @@ public class ChatsModel {
     private String name;
     private String lastMessage;
     private String time;
-    private int unread;
+    private long unread;
     String userPhoneNumber;
 
-    public ChatsModel(int img, boolean status, String name, String lastMessage, String time, int unread, String userPhoneNumber) {
+    public ChatsModel() {
+
+    }
+
+    public ChatsModel(int img, String status, String name, String lastMessage, String time, long unread, String userPhoneNumber) {
         this.img = img;
         this.name = name;
         this.lastMessage = lastMessage;
@@ -17,7 +21,7 @@ public class ChatsModel {
         this.userPhoneNumber = userPhoneNumber;
     }
 
-    public int getUnread() {
+    public long getUnread() {
         return unread;
     }
 
@@ -56,5 +60,13 @@ public class ChatsModel {
 
     public void setUnread(int unread) {
         this.unread = unread;
+    }
+
+    public String getUserPhoneNumber() {
+        return userPhoneNumber;
+    }
+
+    public void setUserPhoneNumber(String userPhoneNumber) {
+        this.userPhoneNumber = userPhoneNumber;
     }
 }

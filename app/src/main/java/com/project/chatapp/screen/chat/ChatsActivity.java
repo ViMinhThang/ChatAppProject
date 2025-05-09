@@ -21,6 +21,9 @@ import com.project.chatapp.model.Chat.ChatsModel;
 import com.project.chatapp.model.Chat.CustomAdapterRVChats;
 import com.project.chatapp.model.Story.CustomAdapterRVStory;
 import com.project.chatapp.model.Story.StoryModel;
+import com.project.chatapp.utils.TimeUtils;
+
+import org.checkerframework.checker.units.qual.C;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +45,7 @@ public class ChatsActivity extends AppCompatActivity {
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
 
         listStory = new ArrayList<>();
+        listChats = new ArrayList<>();
         FirebaseUser currentUser = mAuth.getCurrentUser();
         String userPhoneNumber = currentUser.getPhoneNumber();
         Query query = mDatabase.child("users").orderByChild("phone").equalTo(userPhoneNumber);
@@ -50,27 +54,63 @@ public class ChatsActivity extends AppCompatActivity {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
-                        List<Map<String, Object>> friendsList = (List<Map<String, Object>>) userSnapshot.child("friends").getValue();
-                        for (Map<String, Object> friend : friendsList) {
-                            String friendName = (String) friend.get("name");
-                            listStory.add(new StoryModel(R.drawable.pic1, friendName));
+
+                        // 1. Hiển thị danh sách story từ "friends"
+                        Map<String, Object> friendsMap = (Map<String, Object>) userSnapshot.child("friends").getValue();
+                        if (friendsMap != null) {
+                            for (Map.Entry<String, Object> entry : friendsMap.entrySet()) {
+                                Map<String, Object> friendData = (Map<String, Object>) entry.getValue();
+                                String friendName = (String) friendData.get("name");
+                                listStory.add(new StoryModel(R.drawable.pic1, friendName));
+                            }
+                            adapterStory.notifyDataSetChanged();
+                        }
+
+                        // 2. Hiển thị danh sách chat từ "chats"
+                        DataSnapshot chatsSnapshot = userSnapshot.child("chats");
+                        for (DataSnapshot chatSnapshot : chatsSnapshot.getChildren()) {
+                            String chatId = chatSnapshot.getKey();
+                            if (chatId == null || chatId.startsWith("group")) continue;
+
+                            String lastMessage = chatSnapshot.child("last_message").getValue(String.class);
+                            String lastMessageTime = chatSnapshot.child("last_message_time").getValue(String.class);
+                            Long unreadCount = chatSnapshot.child("unread_count").getValue(Long.class);
+
+                            // Lấy thông tin người bạn chat
+                            mDatabase.child("users").child(chatId).addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot otherUserSnapshot) {
+                                    String name = otherUserSnapshot.child("name").getValue(String.class);
+                                    String status = otherUserSnapshot.child("status").getValue(String.class);
+                                    String phone = otherUserSnapshot.child("phone").getValue(String.class);
+                                    String timeAgo = TimeUtils.getTimeAgo(lastMessageTime);
+
+                                    listChats.add(new ChatsModel(R.drawable.pic1, status, name, lastMessage, timeAgo, unreadCount, phone));
+                                    adapterChat.notifyDataSetChanged();
+                                }
+
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+                                    Log.e("ChatUserError", error.getMessage());
+                                }
+                            });
                         }
                     }
                 } else {
-                    Log.d("Query Result", "Không có user với phoneNumber này.");
+                    Log.d("Query Result", "No user found with this phone number.");
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-
+                Log.d("Query Error", error.getMessage());
             }
         });
+
         adapterStory = new CustomAdapterRVStory(listStory);
         binding.rvStory.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         binding.rvStory.setAdapter(adapterStory);
 
-        listChats = new ArrayList<>();
         adapterChat = new CustomAdapterRVChats(listChats);
         binding.rvChats.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         binding.rvChats.setAdapter(adapterChat);
