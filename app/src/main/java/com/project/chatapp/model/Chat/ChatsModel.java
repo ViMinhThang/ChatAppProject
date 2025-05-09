@@ -6,13 +6,15 @@ public class ChatsModel {
     private String lastMessage;
     private String time;
     private int unread;
+    String userPhoneNumber;
 
-    public ChatsModel(int img, boolean status, String name, String lastMessage, String time, int unread) {
+    public ChatsModel(int img, boolean status, String name, String lastMessage, String time, int unread, String userPhoneNumber) {
         this.img = img;
         this.name = name;
         this.lastMessage = lastMessage;
         this.time = time;
         this.unread = unread;
+        this.userPhoneNumber = userPhoneNumber;
     }
 
     public int getUnread() {
@@ -39,6 +41,7 @@ public class ChatsModel {
     public void setImg(int img) {
         this.img = img;
     }
+
     public void setName(String name) {
         this.name = name;
     }

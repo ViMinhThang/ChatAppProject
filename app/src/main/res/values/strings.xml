@@ -259,4 +259,10 @@
     <string name="clear_icon">Biểu tượng rõ ràng</string>
     <string name="error_icon">Biểu tượng lỗi</string>
     <string name="select_country_region">Chọn quốc gia/khu vực</string>
+    <string name="vo_yeu_dau_1">Vo yeu dau 1</string>
+    <string name="online">Online</string>
+    <string name="my_crush">My crush</string>
+    <string name="em_an_com_chua">Em an com chua?</string>
+    <string name="_1">1</string>
+    <string name="now">now</string>
 </resources>

@@ -5,8 +5,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="#F5F5F5"
+    android:orientation="vertical"
     android:padding="24dp">
 
     <!-- Nút quay lại -->
@@ -14,19 +14,19 @@
         android:id="@+id/ic_back"
         android:layout_width="24dp"
         android:layout_height="24dp"
-        android:src="@drawable/back"
-        android:contentDescription="Back button"/>
+        android:contentDescription="Back button"
+        android:src="@drawable/back" />
     <!-- Tiêu đề -->
     <TextView
         android:id="@+id/tv_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
+        android:gravity="center"
         android:text="@string/enter_phone_number"
-        android:textSize="20sp"
-        android:textStyle="bold"
         android:textColor="#000000"
-        android:gravity="center" />
+        android:textSize="20sp"
+        android:textStyle="bold" />
 
     <!-- Mô tả phụ -->
 
@@ -48,51 +48,58 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
-        android:orientation="horizontal"
+        android:layout_marginBottom="24dp"
         android:background="#F5F6FA"
         android:elevation="2dp"
-        android:padding="12dp"
-        android:layout_marginBottom="24dp">
+        android:orientation="horizontal"
+        android:padding="12dp">
 
         <!-- Country Code Picker -->
         <com.hbb20.CountryCodePicker
             android:id="@+id/ccp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:ccp_showFlag="true"
-            app:ccp_showNameCode="false"
-            app:ccp_showFullName="false"
             app:ccp_clickable="true"
+            app:ccp_padding="0dp"
+            app:ccp_showFlag="true"
+            app:ccp_showFullName="false"
+            app:ccp_showNameCode="false"
             app:ccp_showPhoneCode="true"
-            app:ccp_textSize="18sp"
-            app:ccp_padding="0dp"/>
+            app:ccp_textSize="18sp" />
 
         <!-- Nhập số điện thoại -->
         <EditText
             android:id="@+id/et_phone_number"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
             android:hint="@string/phone_number"
             android:inputType="number"
             android:textColor="#000000"
-            android:textSize="16sp"
-            android:background="@android:color/transparent" />
+            android:textSize="16sp" />
     </LinearLayout>
 
-    <!-- Nút Tiếp tục -->
-    <Button
-        android:id="@+id/btn_continue"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:backgroundTint="#0066FF"
-        android:text="@string/contrinue"
-        android:textColor="#FFFFFF"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:padding="12dp"
-        android:layout_marginBottom="24dp"
-        android:background="@drawable/button_rounded" />
+    <FrameLayout
+        android:layout_width="327dp"
+        android:layout_height="52dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/button_rounded"
+        android:clipToOutline="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/terms_priva">
+
+        <TextView
+            android:id="@+id/btn_continue"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="@string/contrinue"
+            android:textColor="@android:color/white"
+            android:textSize="16sp" />
+    </FrameLayout>
+
 </LinearLayout>

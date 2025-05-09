@@ -1,10 +1,12 @@
 package com.project.chatapp.model.Chat;
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -34,6 +36,12 @@ public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVCh
         holder.lastMessage.setText(chat.getLastMessage());
         holder.time.setText(chat.getTime());
         holder.unread.setText(String.valueOf(chat.getUnread()));
+
+        holder.itemView.setOnClickListener(v -> {
+//            Intent intent = new Intent(holder.itemView.getContext(),)
+//            intent.putExtra("userPhoneNumber", chat.getUserPhoneNumber()); // Pass the phone number or user ID
+//            holder.itemView.getContext().startActivity(intent);
+        });
     }
 
     @Override

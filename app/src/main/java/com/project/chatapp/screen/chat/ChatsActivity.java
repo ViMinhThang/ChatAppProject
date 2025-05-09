@@ -71,8 +71,6 @@ public class ChatsActivity extends AppCompatActivity {
         binding.rvStory.setAdapter(adapterStory);
 
         listChats = new ArrayList<>();
-        listChats.add(new ChatsModel(R.drawable.pic1, true, "My crush", "Em an com chua?", "now", 1));
-        listChats.add(new ChatsModel(R.drawable.pic2, true, "Peter", "Em an com chua?", "tomorrow", 0));
         adapterChat = new CustomAdapterRVChats(listChats);
         binding.rvChats.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         binding.rvChats.setAdapter(adapterChat);

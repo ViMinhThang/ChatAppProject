@@ -6,6 +6,7 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -21,7 +22,7 @@ public class PhoneNumberActivity extends AppCompatActivity {
 
     private CountryCodePicker ccp;
     private EditText etPhoneNumber;
-    private Button btnContinue;
+    private TextView btnContinue;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
 
