@@ -9,14 +9,13 @@
     android:orientation="vertical"
     android:padding="24dp">
 
-    <!-- Nút quay lại -->
     <ImageView
         android:id="@+id/ic_back"
         android:layout_width="24dp"
         android:layout_height="24dp"
         android:contentDescription="Back button"
         android:src="@drawable/back" />
-    <!-- Tiêu đề -->
+
     <TextView
         android:id="@+id/tv_title"
         android:layout_width="match_parent"
@@ -28,11 +27,6 @@
         android:textSize="20sp"
         android:textStyle="bold" />
 
-    <!-- Mô tả phụ -->
-
-    <!-- Nhập mã quốc gia và số điện thoại -->
-
-    <!-- Nút Tiếp tục -->
 
     <TextView
         android:id="@+id/tv_subtitle"
@@ -54,7 +48,6 @@
         android:orientation="horizontal"
         android:padding="12dp">
 
-        <!-- Country Code Picker -->
         <com.hbb20.CountryCodePicker
             android:id="@+id/ccp"
             android:layout_width="wrap_content"

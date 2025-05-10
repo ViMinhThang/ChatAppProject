@@ -8,9 +8,6 @@ public class ChatsModel {
     private long unread;
     String userPhoneNumber;
 
-    public ChatsModel() {
-
-    }
 
     public ChatsModel(int img, String status, String name, String lastMessage, String time, long unread, String userPhoneNumber) {
         this.img = img;

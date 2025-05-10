@@ -55,7 +55,6 @@ public class ChatsActivity extends AppCompatActivity {
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
 
-                        // 1. Hiển thị danh sách story từ "friends"
                         Map<String, Object> friendsMap = (Map<String, Object>) userSnapshot.child("friends").getValue();
                         if (friendsMap != null) {
                             for (Map.Entry<String, Object> entry : friendsMap.entrySet()) {
@@ -66,7 +65,6 @@ public class ChatsActivity extends AppCompatActivity {
                             adapterStory.notifyDataSetChanged();
                         }
 
-                        // 2. Hiển thị danh sách chat từ "chats"
                         DataSnapshot chatsSnapshot = userSnapshot.child("chats");
                         for (DataSnapshot chatSnapshot : chatsSnapshot.getChildren()) {
                             String chatId = chatSnapshot.getKey();
@@ -76,7 +74,6 @@ public class ChatsActivity extends AppCompatActivity {
                             String lastMessageTime = chatSnapshot.child("last_message_time").getValue(String.class);
                             Long unreadCount = chatSnapshot.child("unread_count").getValue(Long.class);
 
-                            // Lấy thông tin người bạn chat
                             mDatabase.child("users").child(chatId).addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(@NonNull DataSnapshot otherUserSnapshot) {

@@ -1,10 +1,14 @@
 package com.project.chatapp.screen.chat;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -12,9 +16,18 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.project.chatapp.R;
 import com.project.chatapp.adapter.ChatApdater;
 import com.project.chatapp.adapter.SettingAdapter;
+import com.project.chatapp.data.FirebaseChatRepository;
 import com.project.chatapp.model.ChatMessage;
 import com.project.chatapp.model.SettingNav;
 
@@ -23,13 +36,10 @@ import java.util.List;
 
 public class MessageActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
-    private SettingAdapter adapter;
     private ChatApdater chatApdater;
-    private List<SettingNav> settingNavList;
     private List<ChatMessage> messageList;
     private EditText etMessage;
-    private ImageView btnSend;
-
+    private ImageView btnSend, btnBack;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,26 +54,27 @@ public class MessageActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         etMessage = findViewById(R.id.etMessage);
         btnSend = findViewById(R.id.btnSend);
+        btnBack = findViewById(R.id.back_chat);
         messageList = new ArrayList<>();
-        messageList.add(new ChatMessage("Look at how chocho sleep in my arms!", "16:46", false));
-        messageList.add(new ChatMessage("Can I come over?", "16:46", true));
-        messageList.add(new ChatMessage("K, I'm on my way", "16:50", true));
-        messageList.add(new ChatMessage("Good morning, did you sleep well?", "09:45", false));
         chatApdater = new ChatApdater(messageList);
         recyclerView.setAdapter(chatApdater);
         btnSend.setOnClickListener(v -> sendMessage());
+        btnBack.setOnClickListener(v -> {
+            startActivity(new Intent(this, ChatsActivity.class));
+        });
+        FirebaseChatRepository repo = new FirebaseChatRepository();
 
-//        settingNavList = new ArrayList<>();
-//        settingNavList.add(new SettingNav(R.drawable.account, "account"));
-//        settingNavList.add(new SettingNav(R.drawable.chat_nav, "Chats"));
-//        settingNavList.add(new SettingNav(R.drawable.appearance, "Appearance"));
-//        settingNavList.add(new SettingNav(R.drawable.notification, "Notification"));
-//        settingNavList.add(new SettingNav(R.drawable.privacy, "Privacy"));
-//        settingNavList.add(new SettingNav(R.drawable.datausage, "Data Usage"));
-//        settingNavList.add(new SettingNav(R.drawable.help, "Help"));
-//        settingNavList.add(new SettingNav(R.drawable.invite, "Invite Your Friends"));
+        repo.getCurrentUserId(userId -> {
+            Log.d("UserID", "My ID: " + userId);
 
+            repo.getMessagesForUser(userId, (from, to, message, timestamp) -> {
+                boolean isSentByMe = from.equals(userId);
+                messageList.add(new ChatMessage(message, timestamp, isSentByMe));
+                chatApdater.notifyItemInserted(messageList.size() - 1);
+                recyclerView.scrollToPosition(messageList.size() - 1);
 
+            });
+        });
     }
 
     private void sendMessage() {
@@ -75,4 +86,6 @@ public class MessageActivity extends AppCompatActivity {
             etMessage.setText("");
         }
     }
+
+
 }
