@@ -6,11 +6,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.project.chatapp.R;
+import com.project.chatapp.data.ChatsRepository;
 import com.project.chatapp.screen.chat.MessageActivity;
 
 import java.util.List;
@@ -39,10 +41,23 @@ public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVCh
         holder.unread.setText(String.valueOf(chat.getUnread()));
 
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(holder.itemView.getContext(), MessageActivity.class);
-            intent.putExtra("userPhoneNumber", chat.getUserPhoneNumber());
-            holder.itemView.getContext().startActivity(intent);
+            ChatsRepository repo = new ChatsRepository();
+            repo.getUserIdByPhone(chat.getUserPhoneNumber(), new ChatsRepository.UserIdCallback() {
+                @Override
+                public void onUserIdFound(String userId) {
+                    Intent intent = new Intent(holder.itemView.getContext(), MessageActivity.class);
+                    intent.putExtra("userId", userId);
+                    holder.itemView.getContext().startActivity(intent);
+                }
+
+                @Override
+                public void onUserIdNotFound() {
+                    Toast.makeText(holder.itemView.getContext(), "Không tìm thấy người dùng", Toast.LENGTH_SHORT).show();
+                }
+            });
         });
+
+
     }
 
     @Override

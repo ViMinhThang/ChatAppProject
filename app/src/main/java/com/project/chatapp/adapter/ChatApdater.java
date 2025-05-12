@@ -34,7 +34,7 @@ public class ChatApdater extends RecyclerView.Adapter<ChatApdater.ChatViewHolder
     public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
         ChatMessage message = messageList.get(position);
         holder.tvMessage.setText(message.getContent());
-        holder.tvTime.setText(message.getTime());
+        holder.tvTime.setText(message.getTimeStamp());
         LinearLayout container = holder.messageContainer;
 
         if (message.isSender()) {
