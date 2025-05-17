@@ -64,7 +64,11 @@ public class OTPVerifyActivity extends AppCompatActivity {
                 if (!s.toString().trim().isEmpty()) {
                     String code = createCode();
                     if (code.length() == 6) {
-                        verifyCode(code);
+                        if (verificationId != null) {
+                            verifyCode(code);
+                        } else {
+                            Toast.makeText(OTPVerifyActivity.this, "Vui lòng chờ mã xác thực được gửi.", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }
             }
