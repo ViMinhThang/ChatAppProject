@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_welcome"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -23,12 +24,12 @@
 
     <TextView
         android:id="@+id/connect_eas"
-        android:layout_width="220dp"
-        android:layout_height="70dp"
-        android:layout_marginTop="20dp"
+        android:layout_width="275dp"
+        android:layout_height="118dp"
+        android:layout_marginTop="85dp"
         android:gravity="center"
         android:text="@string/welcome_title"
-        android:textSize="20dp"
+        android:textSize="30sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.496"
         app:layout_constraintStart_toStartOf="parent"
@@ -38,12 +39,11 @@
         android:id="@+id/terms_priva"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="80dp"
         android:text="@string/terms_policy"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintBottom_toTopOf="@id/button_start"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/connect_eas" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="16dp" />
 
     <FrameLayout
         android:id="@+id/button_start"
@@ -51,10 +51,10 @@
         android:layout_height="52dp"
         android:background="@drawable/button_rounded"
         android:clipToOutline="true"
-        app:layout_constraintTop_toBottomOf="@id/terms_priva"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="10dp">
+        android:layout_marginBottom="40dp">
 
         <TextView
             android:id="@+id/tv_button_text"
@@ -63,7 +63,9 @@
             android:text="@string/contrinue"
             android:gravity="center"
             android:textColor="@android:color/white"
-            android:textSize="16sp" />
+            android:textSize="16sp"
+            android:textStyle="bold" />
     </FrameLayout>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

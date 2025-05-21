@@ -39,8 +39,7 @@ public class PhoneNumberActivity extends AppCompatActivity {
         etPhoneNumber = findViewById(R.id.et_phone_number);
         btnContinue = findViewById(R.id.btn_continue);
 
-        // Đặt quốc gia mặc định là Indonesia (+62)
-        ccp.setDefaultCountryUsingNameCode("ID");
+        ccp.setDefaultCountryUsingNameCode("VN");
         ccp.resetToDefaultCountry();
 
         // Xử lý khi nhấn nút quay lại
