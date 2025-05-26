@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F5F5F5"
+    android:padding="16dp">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="8dp"
+        android:paddingTop="8dp">
+
+        <ImageView
+            android:id="@+id/ic_close"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/back" />
+
+        <TextView
+            android:id="@+id/tv_select_country"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="@string/select_country_region"
+            android:textSize="24sp"
+            android:textColor="#000"
+            android:fontFamily="sans-serif-light" />
+    </RelativeLayout>
+
+    <EditText
+        android:id="@+id/et_search"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/search_holder"
+        android:drawableStart="@drawable/search"
+        android:drawablePadding="8dp"
+        android:hint="@string/search"
+        android:padding="8dp"
+        android:textColorHint="#B0B0B0" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_country_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp" />
+</LinearLayout>

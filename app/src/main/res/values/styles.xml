@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="OtpBoxStyle" parent="Widget.AppCompat.EditText">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">60dp</item>
+        <item name="android:layout_margin">4dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:inputType">number</item>
+        <item name="android:background">@drawable/otp_box_background</item>
+    </style>
+
+
+    <style name="BlueButtonStyle">
+        <item name="backgroundTint">@color/blue</item>
+        <item name="cornerRadius">20dp</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="messengerStyle">
+        <item name="android:layout_width">20dp</item>
+        <item name="android:layout_height">20dp</item>
+        <item name="android:layout_gravity">end</item>
+        <item name="android:layout_marginTop">10dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:textColor">#000000</item>
+        <item name="android:background">@drawable/custom_count_unread</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+
+</resources>
