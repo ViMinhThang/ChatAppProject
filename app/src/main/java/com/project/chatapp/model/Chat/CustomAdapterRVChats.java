@@ -38,7 +38,14 @@ public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVCh
         holder.name.setText(chat.getName());
         holder.lastMessage.setText(chat.getLastMessage());
         holder.time.setText(chat.getTime());
-        holder.unread.setText(String.valueOf(chat.getUnread()));
+
+        long unreadCount = chat.getUnread();
+        if (unreadCount > 0) {
+            holder.unread.setText(String.valueOf(unreadCount));
+            holder.unread.setVisibility(View.VISIBLE);
+        } else {
+            holder.unread.setVisibility(View.GONE);
+        }
 
         holder.itemView.setOnClickListener(v -> {
             ChatsRepository repo = new ChatsRepository();
@@ -56,8 +63,6 @@ public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVCh
                 }
             });
         });
-
-
     }
 
     @Override

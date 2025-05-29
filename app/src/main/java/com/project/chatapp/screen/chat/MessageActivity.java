@@ -51,6 +51,8 @@ import android.provider.Settings;
 import android.app.AlertDialog;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import android.widget.TextView;
+import com.project.chatapp.data.ChatsRepository;
 
 public class MessageActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
@@ -129,6 +131,17 @@ public class MessageActivity extends AppCompatActivity {
         progressDialog.setCancelable(false);
 
         setupPermissionLaunchers();
+
+        // Thêm đoạn này để hiển thị tên người đang nhắn
+        TextView chatter = findViewById(R.id.chatter);
+        ChatsRepository chatsRepository = new ChatsRepository();
+        chatsRepository.getUserNameById(toUserId, name -> {
+            if (name != null) {
+                chatter.setText(name);
+            } else {
+                chatter.setText("Unknown");
+            }
+        });
     }
 
     private void setupPermissionLaunchers() {

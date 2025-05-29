@@ -2,6 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@android:color/black">
 
     <com.github.chrisbanes.photoview.PhotoView
@@ -17,7 +18,7 @@
         android:padding="8dp"
         android:src="@android:drawable/ic_menu_close_clear_cancel"
         android:background="@drawable/circle_background"
-        android:tint="@android:color/white" />
+        app:tint="@android:color/white" />
 
     <ImageView
         android:id="@+id/btnDownload"
@@ -28,7 +29,7 @@
         android:layout_alignParentEnd="true"
         android:src="@android:drawable/ic_menu_save"
         android:background="@drawable/circle_background"
-        android:tint="@android:color/white" />
+        app:tint="@android:color/white" />
 
     <ProgressBar
         android:id="@+id/progressBar"

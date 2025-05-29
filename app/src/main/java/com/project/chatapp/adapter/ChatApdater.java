@@ -2,7 +2,6 @@ package com.project.chatapp.adapter;
 
 import android.content.Intent;
 import android.graphics.Color;
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.view.Gravity;
 import android.view.LayoutInflater;

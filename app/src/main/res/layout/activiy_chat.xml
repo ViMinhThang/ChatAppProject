@@ -9,22 +9,51 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
+        android:orientation="horizontal"
         tools:ignore="UseCompoundDrawables">
         <ImageView
+            android:layout_marginLeft="10dp"
             android:id="@+id/back_chat"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
             android:layout_gravity="center"
             android:contentDescription="@string/backbutton"
             android:src="@drawable/back" />
 
         <TextView
             android:id="@+id/chatter"
+            android:paddingHorizontal="20dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="placeHolder" />
+            android:textSize="20dp"
+            android:textStyle="bold"
+            android:text="Name" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <ImageView
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="20dp"
+            android:id="@+id/call"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_gravity="center_vertical"
+            android:contentDescription="@string/backbutton"
+            android:src="@drawable/call" />
+        <ImageView
+            android:layout_marginLeft="10dp"
+            android:id="@+id/infooo"
+            android:layout_marginRight="10dp"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_gravity="center_vertical"
+            android:contentDescription="@string/backbutton"
+            android:src="@drawable/burger" />
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
