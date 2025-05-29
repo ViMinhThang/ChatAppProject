@@ -120,6 +120,10 @@ public class MessageActivity extends AppCompatActivity {
             Log.d("UserID", "My ID: " + userId);
 
             repo.listenForMessages(userId, toUserId, (from, to, message, timestamp) -> {
+                if (from == null || userId == null) {
+                    Log.e("MessageActivity", "from or userId is null, skip this message");
+                    return;
+                }
                 boolean isSentByMe = from.equals(userId);
                 ChatMessage chatMessage = new ChatMessage(from, to, message, timestamp);
                 chatMessage.setSender(isSentByMe);
