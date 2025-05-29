@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -36,25 +37,47 @@
         android:scrollbars="vertical" />
 
     <LinearLayout
+        android:id="@+id/bottomLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#FFFFFF"
         android:elevation="4dp"
         android:orientation="horizontal"
-        android:padding="8dp">
+        android:padding="8dp"
+        android:gravity="center_vertical">
 
         <ImageView
             android:id="@+id/btnAdd"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:contentDescription="Send"
-            android:src="@drawable/plus" />
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginEnd="16dp"
+            android:contentDescription="Add"
+            android:src="@drawable/plus"
+            app:tint="#1E88E5" />
+
+        <ImageView
+            android:id="@+id/btnSendImg"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:layout_marginEnd="16dp"
+            android:contentDescription="Send Image"
+            android:src="@drawable/send_img"
+            app:tint="#1E88E5" />
+
+        <ImageView
+            android:id="@+id/btnCammera"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:layout_marginEnd="16dp"
+            android:contentDescription="Camera"
+            android:src="@drawable/cammera"
+            app:tint="#1E88E5" />
 
         <EditText
             android:id="@+id/etMessage"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:background="@drawable/edittext_bg"
             android:hint="Type a message..."
@@ -62,10 +85,11 @@
 
         <ImageView
             android:id="@+id/btnSend"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginStart="8dp"
             android:contentDescription="Send"
-            android:src="@drawable/send" />
+            android:src="@drawable/send"
+            app:tint="#1E88E5" />
     </LinearLayout>
 </LinearLayout>
