@@ -57,21 +57,14 @@ public class MessageActivity extends AppCompatActivity {
     private ChatApdater chatApdater;
     private List<ChatMessage> messageList;
     private EditText etMessage;
-    private ImageView btnSend, btnBack, btnCamera, btnSendImg;
+    private ImageView btnSend, btnBack, btnSendImg;
     private FirebaseMessengerRepository repo;
     private String toUserId;
-    private static final int CAMERA_PERMISSION_CODE = 100;
-    private static final int CAMERA_REQUEST_CODE = 101;
     private static final int PICK_IMAGE_VIDEO_REQUEST = 102;
-    private String currentPhotoPath;
     private ProgressDialog progressDialog;
     private static final int STORAGE_PERMISSION_CODE = 103;
     private Uri pendingMediaUri;
-    private Uri photoUri;
-    private static final String[] CAMERA_PERMISSIONS = {
-        Manifest.permission.CAMERA
-    };
-    
+
     private static final String[] STORAGE_PERMISSIONS = {
         Manifest.permission.READ_EXTERNAL_STORAGE,
         Manifest.permission.WRITE_EXTERNAL_STORAGE
@@ -103,7 +96,6 @@ public class MessageActivity extends AppCompatActivity {
         etMessage = findViewById(R.id.etMessage);
         btnSend = findViewById(R.id.btnSend);
         btnBack = findViewById(R.id.back_chat);
-        btnCamera = findViewById(R.id.btnCammera);
         btnSendImg = findViewById(R.id.btnSendImg);
         messageList = new ArrayList<>();
         chatApdater = new ChatApdater(messageList);
@@ -112,7 +104,6 @@ public class MessageActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> {
             startActivity(new Intent(this, ChatsActivity.class));
         });
-        btnCamera.setOnClickListener(v -> checkAndRequestCameraPermissions());
         btnSendImg.setOnClickListener(v -> checkStoragePermission());
         repo = new FirebaseMessengerRepository();
 
@@ -152,7 +143,7 @@ public class MessageActivity extends AppCompatActivity {
                     }
                 }
                 if (allGranted) {
-                    startCamera();
+                    // startCamera();
                 } else {
                     showPermissionDeniedDialog();
                 }
@@ -163,7 +154,7 @@ public class MessageActivity extends AppCompatActivity {
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
                 isReturningFromSettings = true;
-                checkAndRequestCameraPermissions();
+                // checkAndRequestCameraPermissions();
             }
         );
     }
@@ -176,107 +167,6 @@ public class MessageActivity extends AppCompatActivity {
             repo.sendMessage(fromUserId, toUserId, text);
             etMessage.setText("");
         });
-    }
-
-    private void checkAndRequestCameraPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            // For Android 13 and above
-            if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissionLauncher.launch(new String[]{Manifest.permission.CAMERA});
-                return;
-            }
-            startCamera();
-        } else {
-            // For Android 12 and below
-            List<String> permissionsNeeded = new ArrayList<>();
-            
-            if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                permissionsNeeded.add(Manifest.permission.CAMERA);
-            }
-            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                permissionsNeeded.add(Manifest.permission.READ_EXTERNAL_STORAGE);
-            }
-            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                permissionsNeeded.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-            }
-
-            if (!permissionsNeeded.isEmpty()) {
-                requestPermissionLauncher.launch(permissionsNeeded.toArray(new String[0]));
-                return;
-            }
-            startCamera();
-        }
-    }
-
-    private void showPermissionDeniedDialog() {
-        if (!isReturningFromSettings) {
-            new AlertDialog.Builder(this)
-                .setTitle("Permission Required")
-                .setMessage("Camera and storage permissions are required to take photos. Please enable them in app settings.")
-                .setPositiveButton("Open Settings", (dialog, which) -> {
-                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                    Uri uri = Uri.fromParts("package", getPackageName(), null);
-                    intent.setData(uri);
-                    settingsLauncher.launch(intent);
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
-        } else {
-            Toast.makeText(this, "Permissions are still required to use the camera", Toast.LENGTH_LONG).show();
-            isReturningFromSettings = false;
-        }
-    }
-
-    private void startCamera() {
-        try {
-            // Create a file to store the image
-            File photoFile = createImageFile();
-            if (photoFile != null) {
-                photoUri = FileProvider.getUriForFile(this,
-                        "com.project.chatapp.fileprovider",
-                        photoFile);
-
-                // Create camera intent
-                Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
-
-                // Grant URI permissions
-                takePictureIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | 
-                                         Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-
-                // Check if there's a camera app available
-                if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-                    startActivityForResult(takePictureIntent, CAMERA_REQUEST_CODE);
-                } else {
-                    Toast.makeText(this, "No camera app available", Toast.LENGTH_SHORT).show();
-                }
-            }
-        } catch (Exception e) {
-            Log.e("MessageActivity", "Error starting camera: " + e.getMessage());
-            Toast.makeText(this, "Error starting camera: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private File createImageFile() throws IOException {
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-        String imageFileName = "JPEG_" + timeStamp + "_";
-        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        
-        if (!storageDir.exists()) {
-            if (!storageDir.mkdirs()) {
-                Log.e("MessageActivity", "Failed to create directory");
-                throw new IOException("Failed to create directory");
-            }
-        }
-        
-        File image = File.createTempFile(
-                imageFileName,
-                ".jpg",
-                storageDir
-        );
-
-        currentPhotoPath = image.getAbsolutePath();
-        return image;
     }
 
     private void checkStoragePermission() {
@@ -322,23 +212,7 @@ public class MessageActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
-            if (requestCode == CAMERA_REQUEST_CODE) {
-                if (currentPhotoPath != null) {
-                    try {
-                        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                        File f = new File(currentPhotoPath);
-                        Uri contentUri = Uri.fromFile(f);
-                        mediaScanIntent.setData(contentUri);
-                        this.sendBroadcast(mediaScanIntent);
-
-                        Log.d("MessageActivity", "Starting upload of camera photo: " + currentPhotoPath);
-                        uploadMediaToCloudinary(currentPhotoPath);
-                    } catch (Exception e) {
-                        Log.e("MessageActivity", "Error processing camera photo", e);
-                        Toast.makeText(this, "Error processing photo", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            } else if (requestCode == PICK_IMAGE_VIDEO_REQUEST && data != null) {
+            if (requestCode == PICK_IMAGE_VIDEO_REQUEST && data != null) {
                 Uri selectedFileUri = data.getData();
                 if (selectedFileUri != null) {
                     Log.d("MessageActivity", "Selected URI: " + selectedFileUri.toString());
@@ -356,12 +230,6 @@ public class MessageActivity extends AppCompatActivity {
                 }
             }
         } else {
-            if (requestCode == CAMERA_REQUEST_CODE && currentPhotoPath != null) {
-                File file = new File(currentPhotoPath);
-                if (file.exists()) {
-                    file.delete();
-                }
-            }
             Log.d("MessageActivity", "Selection cancelled or failed. Result code: " + resultCode);
         }
     }
@@ -421,14 +289,8 @@ public class MessageActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         // Clean up any temporary files and permissions
-        if (currentPhotoPath != null) {
-            File file = new File(currentPhotoPath);
-            if (file.exists()) {
-                file.delete();
-            }
-        }
-        if (photoUri != null) {
-            revokeUriPermission(photoUri, 
+        if (pendingMediaUri != null) {
+            revokeUriPermission(pendingMediaUri, 
                 Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
         }
     }
@@ -438,7 +300,26 @@ public class MessageActivity extends AppCompatActivity {
         super.onResume();
         if (isReturningFromSettings) {
             isReturningFromSettings = false;
-            checkAndRequestCameraPermissions();
+            // checkAndRequestCameraPermissions();
+        }
+    }
+
+    private void showPermissionDeniedDialog() {
+        if (!isReturningFromSettings) {
+            new AlertDialog.Builder(this)
+                .setTitle("Permission Required")
+                .setMessage("Camera and storage permissions are required to take photos. Please enable them in app settings.")
+                .setPositiveButton("Open Settings", (dialog, which) -> {
+                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    Uri uri = Uri.fromParts("package", getPackageName(), null);
+                    intent.setData(uri);
+                    settingsLauncher.launch(intent);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+        } else {
+            Toast.makeText(this, "Permissions are still required to use the camera", Toast.LENGTH_LONG).show();
+            isReturningFromSettings = false;
         }
     }
 }

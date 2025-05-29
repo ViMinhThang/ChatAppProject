@@ -64,15 +64,6 @@
             android:src="@drawable/send_img"
             app:tint="#1E88E5" />
 
-        <ImageView
-            android:id="@+id/btnCammera"
-            android:layout_width="26dp"
-            android:layout_height="26dp"
-            android:layout_marginEnd="16dp"
-            android:contentDescription="Camera"
-            android:src="@drawable/cammera"
-            app:tint="#1E88E5" />
-
         <EditText
             android:id="@+id/etMessage"
             android:layout_width="0dp"
