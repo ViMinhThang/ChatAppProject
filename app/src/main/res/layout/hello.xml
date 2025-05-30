@@ -11,7 +11,7 @@
     <ImageView
         android:id="@+id/illustration"
         android:layout_width="250dp"
-        android:layout_height="260dp"
+        android:layout_height="250dp"
         android:layout_marginTop="120dp"
         android:adjustViewBounds="true"
         android:contentDescription="@string/illustration_desc"

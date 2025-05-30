@@ -266,4 +266,5 @@
     <string name="_1">1</string>
     <string name="now">now</string>
     <string name="backbutton">backButton</string>
+    <string name="searchbutton">Tìm kiếm</string>
 </resources>
