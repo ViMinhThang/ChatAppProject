@@ -12,12 +12,12 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.VideoView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.bumptech.glide.Glide;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.ui.PlayerView;
 import com.project.chatapp.R;
 import com.project.chatapp.model.ChatMessage;
 import com.project.chatapp.screen.chat.ImageViewerActivity;
@@ -109,35 +109,34 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private void bindVideoMessage(VideoViewHolder holder, ChatMessage message) {
         holder.progressBar.setVisibility(View.VISIBLE);
-        holder.videoView.setVideoURI(Uri.parse(message.getContent()));
+        if (holder.player != null) {
+            holder.player.release();
+        }
+        holder.player = new ExoPlayer.Builder(holder.itemView.getContext()).build();
+        holder.playerView.setPlayer(holder.player);
+        MediaItem mediaItem = MediaItem.fromUri(message.getContent());
+        holder.player.setMediaItem(mediaItem);
+        holder.player.prepare();
+        holder.progressBar.setVisibility(View.GONE);
         holder.tvTime.setText(message.getTimeStamp());
         setMessageAlignment(holder.messageContainer, null, message.isSender());
-
-        holder.videoView.setOnPreparedListener(mp -> {
-            holder.progressBar.setVisibility(View.GONE);
-            mp.setLooping(false);
-            // Set video thumbnail
-            mp.seekTo(100);
-        });
-
-        holder.videoView.setOnErrorListener((mp, what, extra) -> {
-            holder.progressBar.setVisibility(View.GONE);
-            Toast.makeText(holder.itemView.getContext(), "Error loading video", Toast.LENGTH_SHORT).show();
-            return true;
-        });
-
+        holder.ivPlayButton.setVisibility(View.VISIBLE);
         holder.ivPlayButton.setOnClickListener(v -> {
-            if (holder.videoView.isPlaying()) {
-                holder.videoView.pause();
+            if (holder.player.isPlaying()) {
+                holder.player.pause();
                 holder.ivPlayButton.setVisibility(View.VISIBLE);
             } else {
-                holder.videoView.start();
+                holder.player.play();
                 holder.ivPlayButton.setVisibility(View.GONE);
             }
         });
-
-        holder.videoView.setOnCompletionListener(mp -> {
-            holder.ivPlayButton.setVisibility(View.VISIBLE);
+        holder.player.addListener(new com.google.android.exoplayer2.Player.Listener() {
+            @Override
+            public void onPlaybackStateChanged(int state) {
+                if (state == com.google.android.exoplayer2.Player.STATE_ENDED) {
+                    holder.ivPlayButton.setVisibility(View.VISIBLE);
+                }
+            }
         });
     }
 
@@ -152,6 +151,18 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Override
     public int getItemCount() {
         return messageList.size();
+    }
+
+    @Override
+    public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
+        super.onViewRecycled(holder);
+        if (holder instanceof VideoViewHolder) {
+            VideoViewHolder videoHolder = (VideoViewHolder) holder;
+            if (videoHolder.player != null) {
+                videoHolder.player.release();
+                videoHolder.player = null;
+            }
+        }
     }
 
     static class TextViewHolder extends RecyclerView.ViewHolder {
@@ -182,7 +193,8 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     static class VideoViewHolder extends RecyclerView.ViewHolder {
-        VideoView videoView;
+        PlayerView playerView;
+        ExoPlayer player;
         ImageView ivPlayButton;
         TextView tvTime;
         ProgressBar progressBar;
@@ -190,7 +202,7 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         VideoViewHolder(@NonNull View view) {
             super(view);
-            videoView = view.findViewById(R.id.videoView);
+            playerView = view.findViewById(R.id.playerView);
             ivPlayButton = view.findViewById(R.id.ivPlayButton);
             tvTime = view.findViewById(R.id.tvTime);
             progressBar = view.findViewById(R.id.progressBar);

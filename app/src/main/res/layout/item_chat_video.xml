@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/messageContainer"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -10,11 +11,13 @@
         android:layout_width="200dp"
         android:layout_height="200dp">
 
-        <VideoView
-            android:id="@+id/videoView"
+        <com.google.android.exoplayer2.ui.PlayerView
+            android:id="@+id/playerView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/edittext_bg"/>
+            android:background="@drawable/edittext_bg"
+            app:use_controller="true"
+            app:show_buffering="when_playing"/>
 
         <ImageView
             android:id="@+id/ivPlayButton"

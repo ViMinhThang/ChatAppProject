@@ -71,7 +71,7 @@ public class FirebaseMessengerRepository {
             if (task.isSuccessful()) {
                 Log.d("SendMessage", "Message sent");
                 Map<String, Object> lastMsgUpdate = new HashMap<>();
-                lastMsgUpdate.put("last_message", message);
+                lastMsgUpdate.put("last_message", from + ":" + message);
                 lastMsgUpdate.put("last_message_time", timestamp);
                 mDatabase.child("users").child(from).child("chats").child(to).updateChildren(lastMsgUpdate);
                 mDatabase.child("users").child(to).child("chats").child(from).updateChildren(lastMsgUpdate);
