@@ -33,24 +33,30 @@ public class FirebaseMessengerRepository {
 
     public void getCurrentUserId(UserIdCallback callback) {
         FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser == null) return;
-
+        if (currentUser == null) {
+            Log.e("CALL_DEBUG", "FirebaseAuth.getCurrentUser() == null");
+            callback.onUserIdReceived(null);
+            return;
+        }
         String userPhoneNumber = currentUser.getPhoneNumber();
-
+        Log.d("CALL_DEBUG", "FirebaseAuth.getCurrentUser().getPhoneNumber(): " + userPhoneNumber);
         Query query = mDatabase.child("users").orderByChild("phone").equalTo(userPhoneNumber);
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for (DataSnapshot userSnapshot : snapshot.getChildren()) {
                     String userId = userSnapshot.getKey();
+                    Log.d("CALL_DEBUG", "getCurrentUserId trả về userId: " + userId);
                     callback.onUserIdReceived(userId);
                     return;
                 }
+                Log.e("CALL_DEBUG", "Không tìm thấy userId cho số điện thoại: " + userPhoneNumber);
+                callback.onUserIdReceived(null);
             }
-
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 Log.e("FirebaseError", error.getMessage());
+                callback.onUserIdReceived(null);
             }
         });
     }

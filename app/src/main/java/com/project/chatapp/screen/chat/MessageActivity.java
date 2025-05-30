@@ -53,13 +53,15 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import android.widget.TextView;
 import com.project.chatapp.data.ChatsRepository;
+import com.project.chatapp.model.CallModel;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class MessageActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private ChatApdater chatApdater;
     private List<ChatMessage> messageList;
     private EditText etMessage;
-    private ImageView btnSend, btnBack, btnSendImg;
+    private ImageView btnSend, btnBack, btnSendImg, btnCall, btnVideoCall;
     private FirebaseMessengerRepository repo;
     private String toUserId;
     private static final int PICK_IMAGE_VIDEO_REQUEST = 102;
@@ -99,6 +101,8 @@ public class MessageActivity extends AppCompatActivity {
         btnSend = findViewById(R.id.btnSend);
         btnBack = findViewById(R.id.back_chat);
         btnSendImg = findViewById(R.id.btnSendImg);
+        btnCall = findViewById(R.id.call);
+        btnVideoCall = findViewById(R.id.videoCall);
         messageList = new ArrayList<>();
         chatApdater = new ChatApdater(messageList);
         recyclerView.setAdapter(chatApdater);
@@ -107,6 +111,59 @@ public class MessageActivity extends AppCompatActivity {
             startActivity(new Intent(this, ChatsActivity.class));
         });
         btnSendImg.setOnClickListener(v -> checkStoragePermission());
+        btnCall.setOnClickListener(v -> {
+            repo.getCurrentUserId(myUserId -> {
+                if (myUserId == null || myUserId.isEmpty()) {
+                    android.widget.Toast.makeText(this, "Không lấy được userId, vui lòng đăng nhập lại!", android.widget.Toast.LENGTH_LONG).show();
+                    return;
+                }
+                // Reset trạng thái end call về false cho cả hai phía
+                com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
+                    .child("calls_status").child(toUserId).child("end").setValue(false);
+                com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
+                    .child("calls_status").child(myUserId).child("end").setValue(false);
+                String channelName = myUserId.compareTo(toUserId) < 0 ? myUserId + "_" + toUserId : toUserId + "_" + myUserId;
+                ChatsRepository chatsRepository = new ChatsRepository();
+                chatsRepository.getUserNameById(toUserId, name -> {
+                    chatsRepository.getUserNameById(myUserId, myName -> {
+                        long timestamp = System.currentTimeMillis();
+                        CallModel call = new CallModel(myUserId, toUserId, "audio", channelName, myName, timestamp);
+                        com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
+                            .child("calls")
+                            .child(toUserId)
+                            .setValue(call)
+                            .addOnCompleteListener(task -> {
+                                if (task.isSuccessful()) {
+                                    Log.d("CALL_DEBUG", "Gọi AudioCallActivity: channelName=" + channelName + ", myUserId=" + myUserId + ", toUserId=" + toUserId);
+                                    Intent intent = new Intent(this, AudioCallActivity.class);
+                                    intent.putExtra("channelName", channelName);
+                                    intent.putExtra("name", name);
+                                    intent.putExtra("fromUserId", myUserId);
+                                    intent.putExtra("toUserId", toUserId);
+                                    startActivity(intent);
+                                } else {
+                                    Toast.makeText(this, "Tạo cuộc gọi thất bại, vui lòng thử lại!", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                    });
+                });
+            });
+        });
+        btnVideoCall.setOnClickListener(v -> {
+            buildChannelName(channelName -> {
+                if (channelName == null) {
+                    Toast.makeText(this, "Không lấy được userId, vui lòng đăng nhập lại!", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                ChatsRepository chatsRepository = new ChatsRepository();
+                chatsRepository.getUserNameById(toUserId, name -> {
+                    Intent intent = new Intent(this, VideoCallActivity.class);
+                    intent.putExtra("channelName", channelName);
+                    intent.putExtra("name", name);
+                    startActivity(intent);
+                });
+            });
+        });
         repo = new FirebaseMessengerRepository();
 
         repo.getCurrentUserId(userId -> {
@@ -334,5 +391,21 @@ public class MessageActivity extends AppCompatActivity {
             Toast.makeText(this, "Permissions are still required to use the camera", Toast.LENGTH_LONG).show();
             isReturningFromSettings = false;
         }
+    }
+
+    private void buildChannelName(ChannelNameCallback callback) {
+        // Lấy userId hiện tại từ FirebaseAuth qua repo
+        repo.getCurrentUserId(myId -> {
+            if (myId == null || myId.isEmpty()) {
+                callback.onChannelNameBuilt(null);
+                return;
+            }
+            String channelName = myId.compareTo(toUserId) < 0 ? myId + "_" + toUserId : toUserId + "_" + myId;
+            callback.onChannelNameBuilt(channelName);
+        });
+    }
+
+    public interface ChannelNameCallback {
+        void onChannelNameBuilt(String channelName);
     }
 }

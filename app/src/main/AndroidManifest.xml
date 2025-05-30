@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
@@ -10,6 +11,7 @@
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
         android:maxSdkVersion="28"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
         android:allowBackup="true"
@@ -27,10 +29,15 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".screen.chat.AudioCallActivity"
+            android:exported="false" />
+        <activity
+            android:name=".screen.chat.VideoCallActivity"
+            android:exported="false" />
         <activity
             android:name=".screen.authentication.RegisterActivity"
             android:exported="false" />
@@ -40,7 +47,6 @@
         <activity
             android:name=".screen.chat.ChatsActivity"
             android:exported="true">
-
         </activity>
         <activity
             android:name=".screen.authentication.PhoneNumberActivity"
@@ -55,6 +61,9 @@
             android:name=".screen.chat.ImageViewerActivity"
             android:exported="false"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
+        <activity
+            android:name=".screen.chat.IncomingCallActivity"
+            android:exported="false" />
             
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -65,6 +74,13 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+        <service
+            android:name=".MyFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>
