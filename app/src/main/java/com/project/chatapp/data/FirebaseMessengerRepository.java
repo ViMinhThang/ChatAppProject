@@ -22,8 +22,12 @@ public class FirebaseMessengerRepository {
         void onUserIdReceived(String userId);
     }
 
+    public interface UserNameCallback {
+        void onUserNameReceived(String userName);
+    }
+
     public interface MessagesCallback {
-        void onMessage(String from, String to, String message, String timestamp);
+        void onMessage(String from, String to, String message, String timestamp, String messageId);
     }
 
     public FirebaseMessengerRepository() {
@@ -55,12 +59,31 @@ public class FirebaseMessengerRepository {
         });
     }
 
+    public void getUserNameById(String userId, UserNameCallback callback) {
+        mDatabase.child("users").child(userId).child("name").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String userName = snapshot.getValue(String.class);
+                if (userName != null) {
+                    callback.onUserNameReceived(userName);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("FirebaseError", error.getMessage());
+            }
+        });
+    }
+
     public void sendMessage(String from, String to, String message) {
         String timestamp = String.valueOf(System.currentTimeMillis());
         String chatId = from.compareTo(to) < 0 ? from + "_" + to : to + "_" + from;
 
         DatabaseReference chatRef = mDatabase.child("messages").child(chatId);
         DatabaseReference newMsgRef = chatRef.push();
+        String messageId = newMsgRef.getKey();
+
         Map<String, Object> messageData = new HashMap<>();
         messageData.put("from", from);
         messageData.put("to", to);
@@ -87,8 +110,9 @@ public class FirebaseMessengerRepository {
                 String to = snapshot.child("to").getValue(String.class);
                 String message = snapshot.child("message").getValue(String.class);
                 String timestamp = snapshot.child("timestamp").getValue(String.class);
+                String messageId = snapshot.getKey();
 
-                callback.onMessage(from, to, message, TimeUtils.getTimeAgo(timestamp));
+                callback.onMessage(from, to, message, TimeUtils.getTimeAgo(timestamp), messageId);
             }
 
             @Override public void onChildChanged(@NonNull DataSnapshot snapshot, String previousChildName) {}
@@ -99,5 +123,4 @@ public class FirebaseMessengerRepository {
             }
         });
     }
-
 }
