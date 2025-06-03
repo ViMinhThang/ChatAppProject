@@ -15,7 +15,7 @@ public class TimeUtils {
             Date now = new Date();
 
             long diffInMillis = now.getTime() - past.getTime();
-            
+
             // If the difference is negative (message from future due to time mismatch)
             if (diffInMillis < 0) {
                 return formatTime(past);

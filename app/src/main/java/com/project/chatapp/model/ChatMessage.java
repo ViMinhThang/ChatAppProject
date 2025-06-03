@@ -7,6 +7,7 @@ public class ChatMessage {
         VIDEO
     }
 
+    private String id;
     private String fromId;
     private String toId;
     private String content;
@@ -20,6 +21,7 @@ public class ChatMessage {
         this.content = content;
         this.timeStamp = timeStamp;
         this.messageType = detectMessageType(content);
+
     }
 
     private MessageType detectMessageType(String content) {
@@ -32,6 +34,15 @@ public class ChatMessage {
             }
         }
         return MessageType.TEXT;
+
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public MessageType getMessageType() {
@@ -41,6 +52,8 @@ public class ChatMessage {
     public boolean isSender() {
         return isSender;
     }
+
+
 
     public String getContent() {
         return content;
@@ -68,7 +81,6 @@ public class ChatMessage {
 
     public void setContent(String content) {
         this.content = content;
-        this.messageType = detectMessageType(content);
     }
 
     public void setToId(String toId) {

@@ -51,7 +51,9 @@ public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVCh
             preview = lastMsg;
         }
         holder.lastMessage.setText(preview);
+        holder.lastMessage.setText(chat.getLastMessage());
         holder.time.setText(chat.getTime());
+        holder.unread.setText(String.valueOf(chat.getUnread()));
 
         long unreadCount = chat.getUnread();
         if (unreadCount > 0) {
@@ -77,6 +79,8 @@ public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVCh
                 }
             });
         });
+
+
     }
 
     @Override

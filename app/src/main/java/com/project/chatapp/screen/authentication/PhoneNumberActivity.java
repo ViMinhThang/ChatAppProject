@@ -39,6 +39,7 @@ public class PhoneNumberActivity extends AppCompatActivity {
         }
         setContentView(R.layout.activity_phone_number_input);
         db = FirebaseFirestore.getInstance();
+        mAuth = FirebaseAuth.getInstance();
 
         // Ánh xạ các view
         ImageView icBack = findViewById(R.id.ic_back);

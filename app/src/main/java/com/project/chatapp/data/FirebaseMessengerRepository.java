@@ -3,11 +3,11 @@ package com.project.chatapp.data;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.*;
-import com.project.chatapp.model.ChatMessage;
 import com.project.chatapp.utils.TimeUtils;
 
 import java.util.HashMap;
@@ -18,47 +18,67 @@ public class FirebaseMessengerRepository {
     private final DatabaseReference mDatabase;
     private final FirebaseAuth mAuth;
 
-    public interface UserIdCallback {
-        void onUserIdReceived(String userId);
-    }
-
-    public interface MessagesCallback {
-        void onMessage(String from, String to, String message, String timestamp);
-    }
-
     public FirebaseMessengerRepository() {
         mDatabase = FirebaseDatabase.getInstance().getReference();
         mAuth = FirebaseAuth.getInstance();
     }
 
+    public interface UserIdCallback {
+        void onUserIdReceived(@Nullable String userId);
+    }
+
+    public interface UserNameCallback {
+        void onUserNameReceived(@Nullable String userName);
+    }
+
+    public interface MessagesCallback {
+        void onMessage(String from, String to, String message, String timestamp, String messageId);
+    }
+
     public void getCurrentUserId(UserIdCallback callback) {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null) {
-            Log.e("CALL_DEBUG", "FirebaseAuth.getCurrentUser() == null");
+            Log.e("FirebaseAuth", "Current user is null.");
             callback.onUserIdReceived(null);
             return;
         }
-        String userPhoneNumber = currentUser.getPhoneNumber();
-        Log.d("CALL_DEBUG", "FirebaseAuth.getCurrentUser().getPhoneNumber(): " + userPhoneNumber);
-        Query query = mDatabase.child("users").orderByChild("phone").equalTo(userPhoneNumber);
+
+        String userPhone = currentUser.getPhoneNumber();
+        Log.d("FirebaseAuth", "User phone: " + userPhone);
+
+        Query query = mDatabase.child("users").orderByChild("phone").equalTo(userPhone);
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for (DataSnapshot userSnapshot : snapshot.getChildren()) {
-                    String userId = userSnapshot.getKey();
-                    Log.d("CALL_DEBUG", "getCurrentUserId trả về userId: " + userId);
-                    callback.onUserIdReceived(userId);
+                    callback.onUserIdReceived(userSnapshot.getKey());
                     return;
                 }
-                Log.e("CALL_DEBUG", "Không tìm thấy userId cho số điện thoại: " + userPhoneNumber);
-                callback.onUserIdReceived(null);
+                callback.onUserIdReceived(null); // Không tìm thấy
             }
+
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("FirebaseError", error.getMessage());
+                Log.e("FirebaseError", "getCurrentUserId: " + error.getMessage());
                 callback.onUserIdReceived(null);
             }
         });
+    }
+
+    public void getUserNameById(String userId, UserNameCallback callback) {
+        mDatabase.child("users").child(userId).child("name")
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        callback.onUserNameReceived(snapshot.getValue(String.class));
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e("FirebaseError", "getUserNameById: " + error.getMessage());
+                        callback.onUserNameReceived(null);
+                    }
+                });
     }
 
     public void sendMessage(String from, String to, String message) {
@@ -67,22 +87,26 @@ public class FirebaseMessengerRepository {
 
         DatabaseReference chatRef = mDatabase.child("messages").child(chatId);
         DatabaseReference newMsgRef = chatRef.push();
-        Map<String, Object> messageData = new HashMap<>();
-        messageData.put("from", from);
-        messageData.put("to", to);
-        messageData.put("message", message);
-        messageData.put("timestamp", timestamp);
+        String messageId = newMsgRef.getKey();
 
-        newMsgRef.setValue(messageData).addOnCompleteListener(task -> {
+        Map<String, Object> msgData = new HashMap<>();
+        msgData.put("from", from);
+        msgData.put("to", to);
+        msgData.put("message", message);
+        msgData.put("timestamp", timestamp);
+
+        newMsgRef.setValue(msgData).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 Log.d("SendMessage", "Message sent");
-                Map<String, Object> lastMsgUpdate = new HashMap<>();
-                lastMsgUpdate.put("last_message", from + ":" + message);
-                lastMsgUpdate.put("last_message_time", timestamp);
-                mDatabase.child("users").child(from).child("chats").child(to).updateChildren(lastMsgUpdate);
-                mDatabase.child("users").child(to).child("chats").child(from).updateChildren(lastMsgUpdate);
+
+                Map<String, Object> lastMessage = new HashMap<>();
+                lastMessage.put("last_message", from + ":" + message);
+                lastMessage.put("last_message_time", timestamp);
+
+                mDatabase.child("users").child(from).child("chats").child(to).updateChildren(lastMessage);
+                mDatabase.child("users").child(to).child("chats").child(from).updateChildren(lastMessage);
             } else {
-                Log.e("SendMessage", "Failed", task.getException());
+                Log.e("SendMessage", "Failed to send message", task.getException());
             }
         });
     }
@@ -93,22 +117,35 @@ public class FirebaseMessengerRepository {
 
         chatRef.addChildEventListener(new ChildEventListener() {
             @Override
-            public void onChildAdded(@NonNull DataSnapshot snapshot, String previousChildName) {
+            public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                 String from = snapshot.child("from").getValue(String.class);
                 String to = snapshot.child("to").getValue(String.class);
                 String message = snapshot.child("message").getValue(String.class);
                 String timestamp = snapshot.child("timestamp").getValue(String.class);
+                String messageId = snapshot.getKey();
 
-                callback.onMessage(from, to, message, TimeUtils.getTimeAgo(timestamp));
+                if (from != null && to != null && message != null && timestamp != null && messageId != null) {
+                    String readableTime = TimeUtils.getTimeAgo(timestamp);
+                    callback.onMessage(from, to, message, readableTime, messageId);
+                }
             }
 
-            @Override public void onChildChanged(@NonNull DataSnapshot snapshot, String previousChildName) {}
-            @Override public void onChildRemoved(@NonNull DataSnapshot snapshot) {}
-            @Override public void onChildMoved(@NonNull DataSnapshot snapshot, String previousChildName) {}
-            @Override public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("FirebaseError", error.getMessage());
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("FirebaseError", "listenForMessages: " + error.getMessage());
             }
         });
     }
-
 }

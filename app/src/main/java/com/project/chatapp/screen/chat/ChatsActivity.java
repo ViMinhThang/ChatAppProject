@@ -35,6 +35,7 @@ public class ChatsActivity extends AppCompatActivity {
         listStory = new ArrayList<>();
         listChats = new ArrayList<>();
         adapterStory = new CustomAdapterRVStory(listStory);
+        adapterChat = new CustomAdapterRVChats(listChats);
         repo = new ChatsRepository();
 
         binding.rvStory.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
@@ -45,7 +46,7 @@ public class ChatsActivity extends AppCompatActivity {
             binding.rvChats.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
             binding.rvChats.setAdapter(adapterChat);
 
-            repo.loadUserChats(
+        repo.loadUserChats(
                 chats -> {
                     listChats.clear();
                     listChats.addAll(chats);
