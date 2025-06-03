@@ -1,4 +1,4 @@
-package com.project.chatapp;
+package com.project.chatapp.model.Contact;
 
 public class ContactModel {
     private int img ;

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/phone_number"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white">
+
+    <!-- Title -->
+    <TextView
+        android:id="@+id/tv_enter_phone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/enter_phone_number"
+        android:textSize="20sp"
+        android:textColor="#0F1828"
+        android:textStyle="bold"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="100dp" />
+
+    <!-- Subtitle -->
+    <TextView
+        android:id="@+id/tv_subtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/country_phone"
+        android:textSize="14sp"
+        android:textColor="#828282"
+        app:layout_constraintTop_toBottomOf="@id/tv_enter_phone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="12dp" />
+
+    <!-- Phone number input container -->
+    <LinearLayout
+        android:id="@+id/phone_input_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/tv_subtitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="24dp"
+        android:background="@android:color/darker_gray"
+        android:padding="12dp"
+        android:gravity="center_vertical"
+        android:layout_marginHorizontal="20dp">
+
+        <!-- Country code dropdown -->
+        <Spinner
+            android:id="@+id/spinner_country_code"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:popupBackground="@android:color/white"
+            android:background="@android:color/transparent" />
+
+        <!-- EditText nhập số điện thoại -->
+        <EditText
+            android:id="@+id/et_phone_number"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:hint="@string/phone_number"
+            android:inputType="phone"
+            android:textColor="#0F1828"
+            android:textSize="16sp"
+            android:background="@android:color/transparent"
+            android:gravity="center_vertical"
+            android:paddingStart="8dp" />
+    </LinearLayout>
+
+    <!-- Button: "Continue" -->
+    <Button
+        android:id="@+id/button_continue"
+        android:layout_width="327dp"
+        android:layout_height="52dp"
+        android:layout_marginTop="36dp"
+        android:background="@drawable/button_rounded"
+        android:backgroundTint="#003DFF"
+        android:text="@string/contrinue"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/phone_input_container" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

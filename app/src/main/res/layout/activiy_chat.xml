@@ -1,47 +1,129 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:orientation="horizontal"
+        tools:ignore="UseCompoundDrawables">
+        <ImageView
+            android:layout_marginLeft="10dp"
+            android:id="@+id/back_chat"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_gravity="center"
+            android:contentDescription="@string/backbutton"
+            android:src="@drawable/back" />
+
+        <TextView
+            android:id="@+id/chatter"
+            android:paddingHorizontal="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textSize="20dp"
+            android:textStyle="bold"
+            android:text="Name" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <ImageView
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="20dp"
+            android:id="@+id/call"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_gravity="center_vertical"
+            android:contentDescription="@string/backbutton"
+            app:tint="#1E88E5"
+            android:src="@drawable/call" />
+
+        <ImageView
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="20dp"
+            android:id="@+id/videoCall"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_gravity="center_vertical"
+            android:contentDescription="@string/backbutton"
+            app:tint="#1E88E5"
+            android:src="@drawable/video_call" />
+
+        <ImageView
+            android:layout_marginLeft="10dp"
+            android:id="@+id/infooo"
+            android:layout_marginRight="10dp"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_gravity="center_vertical"
+            android:contentDescription="@string/backbutton"
+            app:tint="#1E88E5"
+            android:src="@drawable/burger" />
+    </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:background="@color/lightGrey"
         android:padding="10dp"
-        android:scrollbars="vertical"/>
+        android:scrollbars="vertical" />
 
     <LinearLayout
+        android:id="@+id/bottomLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="#FFFFFF"
+        android:elevation="4dp"
         android:orientation="horizontal"
         android:padding="8dp"
-        android:background="#FFFFFF"
-        android:elevation="4dp">
+        android:gravity="center_vertical">
+
         <ImageView
             android:id="@+id/btnAdd"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginEnd="16dp"
+            android:contentDescription="Add"
             android:src="@drawable/plus"
-            android:layout_gravity="center"
-            android:contentDescription="Send"/>
+            app:tint="#1E88E5" />
+
+        <ImageView
+            android:id="@+id/btnSendImg"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:layout_marginEnd="16dp"
+            android:contentDescription="Send Image"
+            android:src="@drawable/send_img"
+            app:tint="#1E88E5" />
+
         <EditText
             android:id="@+id/etMessage"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:hint="Type a message..."
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
             android:background="@drawable/edittext_bg"
-            android:padding="12dp"/>
+            android:hint="Type a message..."
+            android:padding="12dp" />
 
         <ImageView
             android:id="@+id/btnSend"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginStart="8dp"
+            android:contentDescription="Send"
             android:src="@drawable/send"
-            android:layout_gravity="center"
-            android:contentDescription="Send"/>
+            app:tint="#1E88E5" />
     </LinearLayout>
 </LinearLayout>

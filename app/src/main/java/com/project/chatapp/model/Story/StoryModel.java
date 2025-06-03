@@ -1,4 +1,4 @@
-package com.project.chatapp;
+package com.project.chatapp.model.Story;
 
 public class StoryModel {
     private int imgStory ;

@@ -1,4 +1,4 @@
-package com.project.chatapp;
+package com.project.chatapp.model.Story;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,6 +8,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.project.chatapp.R;
 
 import java.util.List;
 

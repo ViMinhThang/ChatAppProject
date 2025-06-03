@@ -1,21 +1,26 @@
-package com.project.chatapp;
+package com.project.chatapp.model.Chat;
 
 public class ChatsModel {
     private int img;
     private String name;
     private String lastMessage;
     private String time;
-    private int unread;
+    private long unread;
+    String userPhoneNumber;
+    private String userId;
 
-    public ChatsModel(int img, boolean status, String name, String lastMessage, String time, int unread) {
+
+    public ChatsModel(int img, String status, String name, String lastMessage, String time, long unread, String userPhoneNumber, String userId) {
         this.img = img;
         this.name = name;
         this.lastMessage = lastMessage;
         this.time = time;
         this.unread = unread;
+        this.userPhoneNumber = userPhoneNumber;
+        this.userId = userId;
     }
 
-    public int getUnread() {
+    public long getUnread() {
         return unread;
     }
 
@@ -39,6 +44,7 @@ public class ChatsModel {
     public void setImg(int img) {
         this.img = img;
     }
+
     public void setName(String name) {
         this.name = name;
     }
@@ -52,6 +58,26 @@ public class ChatsModel {
     }
 
     public void setUnread(int unread) {
+        this.unread = unread;
+    }
+
+    public String getUserPhoneNumber() {
+        return userPhoneNumber;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserPhoneNumber(String userPhoneNumber) {
+        this.userPhoneNumber = userPhoneNumber;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public void setUnread(long unread) {
         this.unread = unread;
     }
 }

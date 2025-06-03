@@ -1,47 +1,151 @@
 package com.project.chatapp.adapter;
 
+import android.content.Intent;
+import android.graphics.Color;
+import android.net.Uri;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
-
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
+import com.bumptech.glide.Glide;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.ui.PlayerView;
 import com.project.chatapp.R;
 import com.project.chatapp.model.ChatMessage;
+import com.project.chatapp.screen.chat.ImageViewerActivity;
 
 import java.util.List;
 
-public class ChatApdater extends RecyclerView.Adapter<ChatApdater.ChatViewHolder> {
+public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    private static final int VIEW_TYPE_TEXT = 1;
+    private static final int VIEW_TYPE_IMAGE = 2;
+    private static final int VIEW_TYPE_VIDEO = 3;
+
     private List<ChatMessage> messageList;
-    private String currentUserId;
 
     public ChatApdater(List<ChatMessage> messageList) {
         this.messageList = messageList;
     }
 
+    @Override
+    public int getItemViewType(int position) {
+        ChatMessage message = messageList.get(position);
+        switch (message.getMessageType()) {
+            case IMAGE:
+                return VIEW_TYPE_IMAGE;
+            case VIDEO:
+                return VIEW_TYPE_VIDEO;
+            default:
+                return VIEW_TYPE_TEXT;
+        }
+    }
+
     @NonNull
     @Override
-    public ChatViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view;
-        if (viewType == 1) {
-            view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_message_right, parent, false);
-        } else {
-            view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_message_left, parent, false);
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+        switch (viewType) {
+            case VIEW_TYPE_IMAGE:
+                return new ImageViewHolder(inflater.inflate(R.layout.item_chat_image, parent, false));
+            case VIEW_TYPE_VIDEO:
+                return new VideoViewHolder(inflater.inflate(R.layout.item_chat_video, parent, false));
+            default:
+                return new TextViewHolder(inflater.inflate(R.layout.item_chat, parent, false));
         }
-        return new ChatViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         ChatMessage message = messageList.get(position);
-        holder.tvMessage.setText(message.getContent());
-        holder.tvTime.setText(message.getTime());
+        if (holder instanceof TextViewHolder) {
+            bindTextMessage((TextViewHolder) holder, message);
+        } else if (holder instanceof ImageViewHolder) {
+            bindImageMessage((ImageViewHolder) holder, message);
+        } else if (holder instanceof VideoViewHolder) {
+            bindVideoMessage((VideoViewHolder) holder, message);
+        }
     }
 
-    public int getItemViewType(int position) {
-        return messageList.get(position).isSender() ? 1 : 0;
+    private void bindTextMessage(TextViewHolder holder, ChatMessage message) {
+        holder.tvMessage.setText(message.getContent());
+        holder.tvTime.setText(message.getTimeStamp());
+        setMessageAlignment(holder.messageContainer, holder.tvMessage, message.isSender());
+    }
+
+    private void bindImageMessage(ImageViewHolder holder, ChatMessage message) {
+        holder.progressBar.setVisibility(View.VISIBLE);
+        Glide.with(holder.itemView.getContext())
+            .load(message.getContent())
+            .into(holder.ivImage);
+        holder.progressBar.setVisibility(View.GONE);
+        holder.tvTime.setText(message.getTimeStamp());
+        setMessageAlignment(holder.messageContainer, null, message.isSender());
+
+        holder.ivImage.setOnClickListener(v -> {
+            try {
+                String imageUrl = message.getContent();
+                if (imageUrl != null && !imageUrl.isEmpty()) {
+                    Intent intent = new Intent(holder.itemView.getContext(), ImageViewerActivity.class);
+                    intent.putExtra("image_url", imageUrl);
+                    holder.itemView.getContext().startActivity(intent);
+                } else {
+                    Toast.makeText(holder.itemView.getContext(), "Invalid image URL", Toast.LENGTH_SHORT).show();
+                }
+            } catch (Exception e) {
+                Toast.makeText(holder.itemView.getContext(), 
+                    "Error opening image viewer: " + e.getMessage(), 
+                    Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void bindVideoMessage(VideoViewHolder holder, ChatMessage message) {
+        holder.progressBar.setVisibility(View.VISIBLE);
+        if (holder.player != null) {
+            holder.player.release();
+        }
+        holder.player = new ExoPlayer.Builder(holder.itemView.getContext()).build();
+        holder.playerView.setPlayer(holder.player);
+        MediaItem mediaItem = MediaItem.fromUri(message.getContent());
+        holder.player.setMediaItem(mediaItem);
+        holder.player.prepare();
+        holder.progressBar.setVisibility(View.GONE);
+        holder.tvTime.setText(message.getTimeStamp());
+        setMessageAlignment(holder.messageContainer, null, message.isSender());
+        holder.ivPlayButton.setVisibility(View.VISIBLE);
+        holder.ivPlayButton.setOnClickListener(v -> {
+            if (holder.player.isPlaying()) {
+                holder.player.pause();
+                holder.ivPlayButton.setVisibility(View.VISIBLE);
+            } else {
+                holder.player.play();
+                holder.ivPlayButton.setVisibility(View.GONE);
+            }
+        });
+        holder.player.addListener(new com.google.android.exoplayer2.Player.Listener() {
+            @Override
+            public void onPlaybackStateChanged(int state) {
+                if (state == com.google.android.exoplayer2.Player.STATE_ENDED) {
+                    holder.ivPlayButton.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+    }
+
+    private void setMessageAlignment(LinearLayout container, TextView messageView, boolean isSender) {
+        container.setGravity(isSender ? Gravity.END : Gravity.START);
+        if (messageView != null) {
+            messageView.setBackgroundResource(isSender ? R.drawable.bubble_right : R.drawable.buble_left);
+            messageView.setTextColor(isSender ? Color.WHITE : Color.BLACK);
+        }
     }
 
     @Override
@@ -49,14 +153,60 @@ public class ChatApdater extends RecyclerView.Adapter<ChatApdater.ChatViewHolder
         return messageList.size();
     }
 
+    @Override
+    public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
+        super.onViewRecycled(holder);
+        if (holder instanceof VideoViewHolder) {
+            VideoViewHolder videoHolder = (VideoViewHolder) holder;
+            if (videoHolder.player != null) {
+                videoHolder.player.release();
+                videoHolder.player = null;
+            }
+        }
+    }
 
-    public static class ChatViewHolder extends RecyclerView.ViewHolder {
+    static class TextViewHolder extends RecyclerView.ViewHolder {
         TextView tvMessage, tvTime;
+        LinearLayout messageContainer;
 
-        public ChatViewHolder(@NonNull View view) {
+        TextViewHolder(@NonNull View view) {
             super(view);
-            tvMessage = itemView.findViewById(R.id.tvMessage);
-            tvTime = itemView.findViewById(R.id.tvTime);
+            tvMessage = view.findViewById(R.id.tvMessage);
+            tvTime = view.findViewById(R.id.tvTime);
+            messageContainer = view.findViewById(R.id.messageContainer);
+        }
+    }
+
+    static class ImageViewHolder extends RecyclerView.ViewHolder {
+        ImageView ivImage;
+        TextView tvTime;
+        ProgressBar progressBar;
+        LinearLayout messageContainer;
+
+        ImageViewHolder(@NonNull View view) {
+            super(view);
+            ivImage = view.findViewById(R.id.ivImage);
+            tvTime = view.findViewById(R.id.tvTime);
+            progressBar = view.findViewById(R.id.progressBar);
+            messageContainer = view.findViewById(R.id.messageContainer);
+        }
+    }
+
+    static class VideoViewHolder extends RecyclerView.ViewHolder {
+        PlayerView playerView;
+        ExoPlayer player;
+        ImageView ivPlayButton;
+        TextView tvTime;
+        ProgressBar progressBar;
+        LinearLayout messageContainer;
+
+        VideoViewHolder(@NonNull View view) {
+            super(view);
+            playerView = view.findViewById(R.id.playerView);
+            ivPlayButton = view.findViewById(R.id.ivPlayButton);
+            tvTime = view.findViewById(R.id.tvTime);
+            progressBar = view.findViewById(R.id.progressBar);
+            messageContainer = view.findViewById(R.id.messageContainer);
         }
     }
 }
