@@ -98,7 +98,8 @@ public class ChatsRepository {
 
                         String lastMessage = chatSnapshot.child("last_message").getValue(String.class);
                         String lastMessageTime = chatSnapshot.child("last_message_time").getValue(String.class);
-                        Long unreadCount = chatSnapshot.child("unread_count").getValue(Long.class);
+                        Long value = chatSnapshot.child("unread").getValue(Long.class);
+                        long unreadCount = (value != null) ? value.longValue() : 0L;
 
                         mDatabase.child("users").child(chatId).addListenerForSingleValueEvent(new ValueEventListener() {
                             @Override
@@ -137,6 +138,7 @@ public class ChatsRepository {
                 String name = snapshot.child("name").getValue(String.class);
                 callback.onUserNameLoaded(name);
             }
+
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 callback.onUserNameLoaded(null);
