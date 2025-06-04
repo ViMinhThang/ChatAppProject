@@ -1,6 +1,7 @@
 package com.project.chatapp.screen.chat;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -15,14 +16,18 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -43,12 +48,15 @@ import com.project.chatapp.data.ChatsRepository;
 import com.project.chatapp.data.FirebaseMessengerRepository;
 import com.project.chatapp.model.ChatMessage;
 import com.project.chatapp.model.CallModel;
+import com.project.chatapp.screen.location.PickLocationActivity;
 import com.project.chatapp.utils.CloudinaryHelper;
 import com.project.chatapp.utils.TimeUtils;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -61,7 +69,7 @@ public class MessageActivity extends AppCompatActivity {
     // UI Components
     private RecyclerView recyclerView;
     private EditText etMessage, etSearchInput;
-    private ImageView btnSend, btnBack, btnSendImg, btnCall, btnVideoCall;
+    private ImageView btnSend, btnBack, btnSendImg, btnCall, btnVideoCall, btnAdd;
     private ImageView btnSearch, btnClearSearch, btnPrevious, btnNext;
     private TextView tvSearchResult;
     private LinearLayout searchBarView, searchNavigationView;
@@ -120,6 +128,7 @@ public class MessageActivity extends AppCompatActivity {
         btnSearch = findViewById(R.id.btnSearch);
         btnClearSearch = findViewById(R.id.btnClearSearch);
         btnPrevious = findViewById(R.id.btnPrevious);
+        btnAdd = findViewById(R.id.btnAdd);
         btnNext = findViewById(R.id.btnNext);
         tvSearchResult = findViewById(R.id.tvSearchResult);
         searchBarView = findViewById(R.id.searchBarView);
@@ -139,6 +148,13 @@ public class MessageActivity extends AppCompatActivity {
         btnSend.setOnClickListener(v -> sendMessage());
         btnBack.setOnClickListener(v -> {
             startActivity(new Intent(this, ChatsActivity.class));
+        });
+
+        btnAdd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showAddOptionsMenu(view); // gọi hàm riêng
+            }
         });
         btnSendImg.setOnClickListener(v -> checkStoragePermission());
         btnCall.setOnClickListener(v -> {
@@ -240,7 +256,13 @@ public class MessageActivity extends AppCompatActivity {
             });
         });
     }
+    private void sendCordinate(String corr) {
 
+        repo.getCurrentUserId(fromUserId -> {
+            repo.sendMessage(fromUserId, toUserId, corr);
+            etMessage.setText("");
+        });
+    }
     private void sendMessage() {
         String text = etMessage.getText().toString().trim();
         if (text.isEmpty()) return;
@@ -509,19 +531,82 @@ public class MessageActivity extends AppCompatActivity {
         }
     }
 
-    private void buildChannelName(ChannelNameCallback callback) {
-        // Lấy userId hiện tại từ FirebaseAuth qua repo
-        repo.getCurrentUserId(myId -> {
-            if (myId == null || myId.isEmpty()) {
+    private void buildChannelName(ChannelCallback callback) {
+        repo.getCurrentUserId(myUserId -> {
+            if (myUserId == null || myUserId.isEmpty() || toUserId == null || toUserId.isEmpty()) {
                 callback.onChannelNameBuilt(null);
                 return;
             }
-            String channelName = myId.compareTo(toUserId) < 0 ? myId + "_" + toUserId : toUserId + "_" + myId;
+
+            String channelName = myUserId.compareTo(toUserId) < 0
+                    ? myUserId + "_" + toUserId
+                    : toUserId + "_" + myUserId;
+
             callback.onChannelNameBuilt(channelName);
         });
     }
 
-    public interface ChannelNameCallback {
+    private void showAddOptionsMenu(View anchor) {
+        PopupMenu popupMenu = new PopupMenu(this, anchor);
+        popupMenu.getMenuInflater().inflate(R.menu.menu_add_options, popupMenu.getMenu());
+
+        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                ActivityCompat.requestPermissions(MessageActivity.this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        1001);
+
+                int id = menuItem.getItemId();
+                if (id == R.id.action_send_location) {
+                    Intent intent = new Intent(MessageActivity.this, PickLocationActivity.class);
+                    pickLocationLauncher.launch(intent);
+                    return true;
+
+                }
+                return false;
+            }
+        });
+
+        forceShowIcons(popupMenu);
+
+        popupMenu.show();
+    }
+
+    private ActivityResultLauncher<Intent> pickLocationLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK) {
+                    Intent data = result.getData();
+                    if (data != null) {
+                        Log.d("result", String.valueOf(result));
+                        double latitude = data.getDoubleExtra("lat", 0);
+                        double longitude = data.getDoubleExtra("lng", 0);
+                        String locationMessage = "location:" + latitude + "," + longitude;
+                        sendCordinate(locationMessage);
+                    }
+                }
+            });
+
+    private void forceShowIcons(PopupMenu popupMenu) {
+        try {
+            Field[] fields = popupMenu.getClass().getDeclaredFields();
+            for (Field field : fields) {
+                if ("mPopup".equals(field.getName())) {
+                    field.setAccessible(true);
+                    Object menuPopupHelper = field.get(popupMenu);
+                    Class<?> classPopupHelper = Class.forName(menuPopupHelper.getClass().getName());
+                    Method setForceIcons = classPopupHelper.getMethod("setForceShowIcon", boolean.class);
+                    setForceIcons.invoke(menuPopupHelper, true);
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    interface ChannelCallback {
         void onChannelNameBuilt(String channelName);
     }
 }

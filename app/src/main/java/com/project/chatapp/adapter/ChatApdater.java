@@ -2,6 +2,7 @@ package com.project.chatapp.adapter;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.BackgroundColorSpan;
@@ -39,6 +40,7 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int VIEW_TYPE_TEXT = 1;
     private static final int VIEW_TYPE_IMAGE = 2;
     private static final int VIEW_TYPE_VIDEO = 3;
+    private static final int VIEW_TYPE_LOCATION = 4;
 
     private List<ChatMessage> messageList;
     private String searchQuery = "";
@@ -69,10 +71,13 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 return VIEW_TYPE_IMAGE;
             case VIDEO:
                 return VIEW_TYPE_VIDEO;
+            case LOCATION:
+                return VIEW_TYPE_LOCATION;
             default:
                 return VIEW_TYPE_TEXT;
         }
     }
+
 
     @NonNull
     @Override
@@ -83,10 +88,13 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 return new ImageViewHolder(inflater.inflate(R.layout.item_chat_image, parent, false));
             case VIEW_TYPE_VIDEO:
                 return new VideoViewHolder(inflater.inflate(R.layout.item_chat_video, parent, false));
+            case VIEW_TYPE_LOCATION:
+                return new LocationViewHolder(inflater.inflate(R.layout.item_chat_location, parent, false));
             default:
                 return new TextViewHolder(inflater.inflate(R.layout.item_chat, parent, false));
         }
     }
+
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
@@ -97,8 +105,44 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             bindImageMessage((ImageViewHolder) holder, message);
         } else if (holder instanceof VideoViewHolder) {
             bindVideoMessage((VideoViewHolder) holder, message);
+        } else if (holder instanceof LocationViewHolder) {
+            bindLocationMessage((LocationViewHolder) holder, message);
         }
     }
+
+    private void bindLocationMessage(LocationViewHolder holder, ChatMessage message) {
+        holder.tvLocation.setText("Xem vị trí");
+
+        holder.tvTime.setText(message.getTimeStamp());
+        setMessageAlignment(holder.messageContainer, null, message.isSender());
+
+        holder.tvLocation.setOnClickListener(v -> {
+            String text = message.getContent();  // vẫn lấy content thật để parse
+            if (text.startsWith("location:")) {
+                String coords = text.substring("location:".length());
+                String[] parts = coords.split(",");
+                if (parts.length == 2) {
+                    try {
+                        double lat = Double.parseDouble(parts[0].trim());
+                        double lng = Double.parseDouble(parts[1].trim());
+
+                        String uri = "geo:" + lat + "," + lng + "?q=" + lat + "," + lng + "(Vị trí được chia sẻ)";
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
+                        intent.setPackage("com.google.android.apps.maps");
+
+                        if (intent.resolveActivity(holder.itemView.getContext().getPackageManager()) != null) {
+                            holder.itemView.getContext().startActivity(intent);
+                        } else {
+                            Toast.makeText(holder.itemView.getContext(), "Không tìm thấy ứng dụng bản đồ", Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (NumberFormatException e) {
+                        Toast.makeText(holder.itemView.getContext(), "Tọa độ không hợp lệ", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        });
+    }
+
 
     private void bindTextMessage(TextViewHolder holder, ChatMessage message, int position) {
         if (searchQuery != null && !searchQuery.isEmpty()) {
@@ -121,6 +165,18 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 clickListener.onMessageClick(position);
             }
         });
+    }
+
+    static class LocationViewHolder extends RecyclerView.ViewHolder {
+        TextView tvLocation, tvTime;
+        LinearLayout messageContainer;
+
+        LocationViewHolder(@NonNull View view) {
+            super(view);
+            tvLocation = view.findViewById(R.id.tvLocation);
+            tvTime = view.findViewById(R.id.tvTime);
+            messageContainer = view.findViewById(R.id.messageContainer);
+        }
     }
 
     private SpannableString highlightSearchText(String text, String searchQuery) {

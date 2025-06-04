@@ -1,6 +1,7 @@
 package com.project.chatapp.model.Chat;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,10 +21,26 @@ import java.util.List;
 public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVChats.ViewHolder> {
     private List<ChatsModel> listChats;
     private String currentUserId;
+    private OnChatClickListener listener;
+
 
     public CustomAdapterRVChats(List<ChatsModel> listChats, String currentUserId) {
         this.listChats = listChats;
         this.currentUserId = currentUserId;
+    }
+
+    public CustomAdapterRVChats(List<ChatsModel> listChats, String currentUserId, OnChatClickListener listener) {
+        this.listChats = listChats;
+        this.currentUserId = currentUserId;
+        this.listener = listener;
+    }
+
+    public interface OnChatClickListener {
+        void onChatClicked(String userId);
+    }
+
+    public void setOnChatClickListener(OnChatClickListener listener) {
+        this.listener = listener;
     }
 
     @NonNull
@@ -47,11 +64,13 @@ public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVCh
             preview = isSentByMe(lastMsg) ? "Bạn đã gửi một ảnh" : "Bạn đã nhận một ảnh";
         } else if (isVideoMessage(lastMsg)) {
             preview = isSentByMe(lastMsg) ? "Bạn đã gửi một video" : "Bạn đã nhận một video";
+        } else if (isLocationMessage(lastMsg)) {
+            preview = isSentByMe(lastMsg) ? "Bạn đã gửi một tọa độ" : "Bạn đã nhận một tọa độ";
+
         } else {
             preview = lastMsg;
         }
         holder.lastMessage.setText(preview);
-        holder.lastMessage.setText(chat.getLastMessage());
         holder.time.setText(chat.getTime());
         holder.unread.setText(String.valueOf(chat.getUnread()));
 
@@ -68,9 +87,9 @@ public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVCh
             repo.getUserIdByPhone(chat.getUserPhoneNumber(), new ChatsRepository.UserIdCallback() {
                 @Override
                 public void onUserIdFound(String userId) {
-                    Intent intent = new Intent(holder.itemView.getContext(), MessageActivity.class);
-                    intent.putExtra("userId", userId);
-                    holder.itemView.getContext().startActivity(intent);
+                    if (listener != null) {
+                        listener.onChatClicked(userId);
+                    }
                 }
 
                 @Override
@@ -92,6 +111,11 @@ public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVCh
         if (content == null) return false;
         String lower = content.toLowerCase();
         return lower.contains("cloudinary.com") && (lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png") || lower.contains("/image/"));
+    }
+
+    private boolean isLocationMessage(String content) {
+        if (content == null) return false;
+        return content.contains("location:");
     }
 
     private boolean isVideoMessage(String content) {

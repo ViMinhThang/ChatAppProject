@@ -4,7 +4,8 @@ public class ChatMessage {
     public enum MessageType {
         TEXT,
         IMAGE,
-        VIDEO
+        VIDEO,
+        LOCATION  // thêm kiểu mới
     }
 
     private String id;
@@ -26,15 +27,20 @@ public class ChatMessage {
 
     private MessageType detectMessageType(String content) {
         if (content == null) return MessageType.TEXT;
-        if (content.toLowerCase().contains("cloudinary.com")) {
-            if (content.toLowerCase().contains("/video/")) {
+
+        String lowerContent = content.toLowerCase();
+
+        if (lowerContent.contains("cloudinary.com")) {
+            if (lowerContent.contains("/video/")) {
                 return MessageType.VIDEO;
-            } else if (content.toLowerCase().contains("/image/")) {
+            } else if (lowerContent.contains("/image/")) {
                 return MessageType.IMAGE;
             }
+        } else if (lowerContent.contains("location")) {
+            return MessageType.LOCATION;
         }
-        return MessageType.TEXT;
 
+        return MessageType.TEXT;
     }
 
     public String getId() {
@@ -52,7 +58,6 @@ public class ChatMessage {
     public boolean isSender() {
         return isSender;
     }
-
 
 
     public String getContent() {

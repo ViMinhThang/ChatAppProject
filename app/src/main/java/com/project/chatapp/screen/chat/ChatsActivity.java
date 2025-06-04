@@ -3,60 +3,48 @@ package com.project.chatapp.screen.chat;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.fragment.app.Fragment;
 
-import com.project.chatapp.data.ChatsRepository;
-import com.project.chatapp.data.FirebaseMessengerRepository;
-import com.project.chatapp.databinding.ActivityChatsBinding;
-import com.project.chatapp.model.Chat.ChatsModel;
-import com.project.chatapp.model.Chat.CustomAdapterRVChats;
-import com.project.chatapp.model.Story.CustomAdapterRVStory;
-import com.project.chatapp.model.Story.StoryModel;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.project.chatapp.R;
 
 public class ChatsActivity extends AppCompatActivity {
-    private ActivityChatsBinding binding;
-    private List<ChatsModel> listChats;
-    private List<StoryModel> listStory;
-    private CustomAdapterRVStory adapterStory;
-    private CustomAdapterRVChats adapterChat;
-    private ChatsRepository repo;
+
+    private BottomNavigationView bottomNavigationView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = ActivityChatsBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+        setContentView(R.layout.activity_chats);
 
-        listStory = new ArrayList<>();
-        listChats = new ArrayList<>();
-        adapterStory = new CustomAdapterRVStory(listStory);
-        repo = new ChatsRepository();
+        bottomNavigationView = findViewById(R.id.bottomNavigationView);
 
-        binding.rvStory.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-        binding.rvStory.setAdapter(adapterStory);
+        // Mặc định hiển thị ChatsFragment khi mở app
+        if (savedInstanceState == null) {
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, new ChatsFragment())
+                    .commit();
+        }
 
-        new FirebaseMessengerRepository().getCurrentUserId(userId -> {
-            CustomAdapterRVChats adapterChat = new CustomAdapterRVChats(listChats, userId);
-            binding.rvChats.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
-            binding.rvChats.setAdapter(adapterChat);
-
-            repo.loadUserChats(
-                    chats -> {
-                        listChats.clear();
-                        listChats.addAll(chats);
-                        adapterChat.notifyDataSetChanged();
-                    },
-                    stories -> {
-                        listStory.clear();
-                        listStory.addAll(stories);
-                        adapterStory.notifyDataSetChanged();
-                    }
-            );
+        bottomNavigationView.setOnNavigationItemSelectedListener(item -> {
+            Fragment selectedFragment = null;
+            int id = item.getItemId();
+            if (id == R.id.nav_chats) {
+                selectedFragment = new ChatsFragment();
+            } else if (id == R.id.nav_contacts) {
+                selectedFragment = new ContactFragment();
+            } else if (id == R.id.nav_settings) {
+                selectedFragment = new MoreFragment();
+            }
+            if (selectedFragment != null) {
+                getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, selectedFragment)
+                        .commit();
+                return true;
+            }
+            return false;
         });
     }
 }

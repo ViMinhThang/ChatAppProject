@@ -51,8 +51,7 @@
             android:layout_marginLeft="10dp"
             android:layout_marginRight="20dp"
             android:contentDescription="@string/backbutton"
-            android:src="@drawable/call"
-            app:tint="#1E88E5" />
+            android:src="@drawable/call" />
 
         <ImageView
             android:id="@+id/videoCall"
@@ -62,8 +61,7 @@
             android:layout_marginLeft="10dp"
             android:layout_marginRight="20dp"
             android:contentDescription="@string/backbutton"
-            android:src="@drawable/video_call"
-            app:tint="#1E88E5" />
+            android:src="@drawable/video_call" />
 
         <ImageView
             android:id="@+id/infooo"
@@ -73,8 +71,7 @@
             android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp"
             android:contentDescription="@string/backbutton"
-            android:src="@drawable/burger"
-            app:tint="#1E88E5" />
+            android:src="@drawable/burger" />
 
         <ImageView
             android:id="@+id/btnSearch"

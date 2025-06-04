@@ -3,15 +3,23 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
-        android:maxSdkVersion="28"/>
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -24,6 +32,10 @@
         android:theme="@style/Theme.ChatApp"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="////" />
+
         <activity
             android:name=".screen.authentication.MainActivity"
             android:exported="true">
@@ -36,6 +48,9 @@
             android:name=".screen.chat.AudioCallActivity"
             android:exported="false" />
         <activity
+            android:name=".screen.location.PickLocationActivity"
+            android:exported="false" />
+        <activity
             android:name=".screen.chat.VideoCallActivity"
             android:exported="false" />
         <activity
@@ -46,8 +61,7 @@
             android:exported="true" />
         <activity
             android:name=".screen.chat.ChatsActivity"
-            android:exported="true">
-        </activity>
+            android:exported="true" />
         <activity
             android:name=".screen.authentication.PhoneNumberActivity"
             android:exported="false" />
@@ -55,16 +69,13 @@
             android:name=".screen.authentication.OTPVerifyActivity"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".screen.chat.ContactsActivity"
-            android:exported="false" />
-        <activity
             android:name=".screen.chat.ImageViewerActivity"
             android:exported="false"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
         <activity
             android:name=".screen.chat.IncomingCallActivity"
             android:exported="false" />
-            
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.project.chatapp.fileprovider"
@@ -78,7 +89,7 @@
             android:name=".MyFirebaseMessagingService"
             android:exported="false">
             <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
     </application>
