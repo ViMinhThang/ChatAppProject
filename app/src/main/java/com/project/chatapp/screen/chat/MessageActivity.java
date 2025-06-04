@@ -103,9 +103,9 @@ public class MessageActivity extends AppCompatActivity {
 
         initViews();
         setupRecyclerView();
-        setupEventListeners();
         setupFirebase();
-
+        setupEventListeners();
+        setupPermissionLaunchers();
     }
 
     private void initViews() {
@@ -125,6 +125,8 @@ public class MessageActivity extends AppCompatActivity {
         searchBarView = findViewById(R.id.searchBarView);
         searchNavigationView = findViewById(R.id.searchNavigationView);
         progressDialog = new ProgressDialog(this);
+        searchResults = new ArrayList<>();
+        searchPositions = new ArrayList<>();
     }
 
     private void setupRecyclerView() {
@@ -194,8 +196,6 @@ public class MessageActivity extends AppCompatActivity {
         });
         if (isSearchMode) {
             exitSearchMode();
-        } else {
-            startActivity(new Intent(this, ChatsActivity.class));
         }
         btnSearch.setOnClickListener(v -> toggleSearchMode());
         btnClearSearch.setOnClickListener(v -> clearSearch());
@@ -448,8 +448,6 @@ public class MessageActivity extends AppCompatActivity {
         } else {
             enterSearchMode();
         }
-        setupPermissionLaunchers();
-
         // Thêm đoạn này để hiển thị tên người đang nhắn
         TextView chatter = findViewById(R.id.chatter);
         ChatsRepository chatsRepository = new ChatsRepository();

@@ -107,7 +107,7 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             holder.tvMessage.setText(message.getContent());
         }
 
-        holder.tvTime.setText(formatTime(message.getTimeStamp()));
+        holder.tvTime.setText(message.getTimeStamp());
         setMessageAlignment(holder.messageContainer, holder.tvMessage, message.isSender());
 
         if (position == highlightPosition) {
@@ -138,7 +138,7 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         holder.progressBar.setVisibility(View.VISIBLE);
         Glide.with(holder.itemView.getContext()).load(message.getContent()).into(holder.ivImage);
         holder.progressBar.setVisibility(View.GONE);
-        holder.tvTime.setText(formatTime(message.getTimeStamp()));
+        holder.tvTime.setText(message.getTimeStamp());
         setMessageAlignment(holder.messageContainer, null, message.isSender());
 
         holder.ivImage.setOnClickListener(v -> {
@@ -157,7 +157,7 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         holder.player.setMediaItem(MediaItem.fromUri(message.getContent()));
         holder.player.prepare();
         holder.progressBar.setVisibility(View.GONE);
-        holder.tvTime.setText(formatTime(message.getTimeStamp()));
+        holder.tvTime.setText(message.getTimeStamp());
         setMessageAlignment(holder.messageContainer, null, message.isSender());
 
         holder.ivPlayButton.setOnClickListener(v -> {
@@ -169,34 +169,6 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 holder.ivPlayButton.setVisibility(View.GONE);
             }
         });
-    }
-
-    private String formatTime(String timestamp) {
-        try {
-            long time = Long.parseLong(timestamp);
-            if (timestamp.length() == 10) time *= 1000;
-            Date messageDate = new Date(time);
-            Date now = new Date();
-            Calendar cal1 = Calendar.getInstance();
-            cal1.setTime(messageDate);
-            Calendar cal2 = Calendar.getInstance();
-            cal2.setTime(now);
-
-            if (isSameDay(cal1, cal2)) {
-                return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(messageDate);
-            }
-
-            cal2.add(Calendar.DAY_OF_YEAR, -1);
-            if (isSameDay(cal1, cal2)) return "Hôm qua";
-
-            if (cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR)) {
-                return new SimpleDateFormat("dd/MM", Locale.getDefault()).format(messageDate);
-            }
-            return new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(messageDate);
-        } catch (Exception e) {
-            Log.e("ChatAdapter", "Time parse error", e);
-            return "";
-        }
     }
 
     private boolean isSameDay(Calendar c1, Calendar c2) {
@@ -231,6 +203,7 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     static class TextViewHolder extends RecyclerView.ViewHolder {
         TextView tvMessage, tvTime;
         LinearLayout messageContainer;
+
         TextViewHolder(@NonNull View view) {
             super(view);
             tvMessage = view.findViewById(R.id.tvMessage);
@@ -244,6 +217,7 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         TextView tvTime;
         ProgressBar progressBar;
         LinearLayout messageContainer;
+
         ImageViewHolder(@NonNull View view) {
             super(view);
             ivImage = view.findViewById(R.id.ivImage);
@@ -260,6 +234,7 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         TextView tvTime;
         ProgressBar progressBar;
         LinearLayout messageContainer;
+
         VideoViewHolder(@NonNull View view) {
             super(view);
             playerView = view.findViewById(R.id.playerView);

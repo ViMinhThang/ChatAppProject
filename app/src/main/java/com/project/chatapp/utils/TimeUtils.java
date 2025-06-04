@@ -1,5 +1,6 @@
 package com.project.chatapp.utils;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -8,15 +9,28 @@ import java.util.concurrent.TimeUnit;
 
 public class TimeUtils {
 
+
+
     public static String getTimeAgo(String timestamp) {
         try {
-            long timeMillis = Long.parseLong(timestamp);
-            Date past = new Date(timeMillis);
-            Date now = new Date();
+            Date past;
 
+            // Nếu timestamp là chuỗi số dạng millis (chỉ chứa chữ số)
+            if (timestamp.matches("\\d+")) {
+                long timeMillis = Long.parseLong(timestamp);
+                past = new Date(timeMillis);
+            } else {
+                // Nếu timestamp là chuỗi ISO 8601
+                SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault());
+                isoFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+                past = isoFormat.parse(timestamp);
+            }
+
+            if (past == null) return formatCurrentTime();
+
+            Date now = new Date();
             long diffInMillis = now.getTime() - past.getTime();
 
-            // If the difference is negative (message from future due to time mismatch)
             if (diffInMillis < 0) {
                 return formatTime(past);
             }
@@ -37,11 +51,13 @@ public class TimeUtils {
             } else {
                 return formatTime(past);
             }
+
         } catch (Exception e) {
             e.printStackTrace();
             return formatCurrentTime();
         }
     }
+
 
     private static String formatTime(Date date) {
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm, dd MMM", Locale.getDefault());
