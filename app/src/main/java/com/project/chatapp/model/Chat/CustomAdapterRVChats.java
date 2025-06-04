@@ -19,9 +19,11 @@ import java.util.List;
 
 public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVChats.ViewHolder> {
     private List<ChatsModel> listChats;
+    private String currentUserId;
 
-    public CustomAdapterRVChats(List<ChatsModel> listChats) {
+    public CustomAdapterRVChats(List<ChatsModel> listChats, String currentUserId) {
         this.listChats = listChats;
+        this.currentUserId = currentUserId;
     }
 
     @NonNull
@@ -36,9 +38,30 @@ public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVCh
         ChatsModel chat = listChats.get(position);
         holder.img.setImageResource(chat.getImg());
         holder.name.setText(chat.getName());
+
+        String lastMsg = chat.getLastMessage();
+        String preview;
+        if (lastMsg == null) {
+            preview = "";
+        } else if (isImageMessage(lastMsg)) {
+            preview = isSentByMe(lastMsg) ? "Bạn đã gửi một ảnh" : "Bạn đã nhận một ảnh";
+        } else if (isVideoMessage(lastMsg)) {
+            preview = isSentByMe(lastMsg) ? "Bạn đã gửi một video" : "Bạn đã nhận một video";
+        } else {
+            preview = lastMsg;
+        }
+        holder.lastMessage.setText(preview);
         holder.lastMessage.setText(chat.getLastMessage());
         holder.time.setText(chat.getTime());
         holder.unread.setText(String.valueOf(chat.getUnread()));
+
+        long unreadCount = chat.getUnread();
+        if (unreadCount > 0) {
+            holder.unread.setText(String.valueOf(unreadCount));
+            holder.unread.setVisibility(View.VISIBLE);
+        } else {
+            holder.unread.setVisibility(View.GONE);
+        }
 
         holder.itemView.setOnClickListener(v -> {
             ChatsRepository repo = new ChatsRepository();
@@ -63,6 +86,27 @@ public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVCh
     @Override
     public int getItemCount() {
         return listChats.size();
+    }
+
+    private boolean isImageMessage(String content) {
+        if (content == null) return false;
+        String lower = content.toLowerCase();
+        return lower.contains("cloudinary.com") && (lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png") || lower.contains("/image/"));
+    }
+
+    private boolean isVideoMessage(String content) {
+        if (content == null) return false;
+        String lower = content.toLowerCase();
+        return lower.contains("cloudinary.com") && (lower.endsWith(".mp4") || lower.endsWith(".mov") || lower.endsWith(".3gp") || lower.contains("/video/"));
+    }
+
+    private boolean isSentByMe(String lastMsg) {
+        if (lastMsg == null) return false;
+        if (lastMsg.contains(":")) {
+            String[] parts = lastMsg.split(":", 2);
+            return parts[0].equals(currentUserId);
+        }
+        return false;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {

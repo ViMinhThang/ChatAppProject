@@ -33,6 +33,10 @@ public class ChatsRepository {
         void onStoriesLoaded(List<StoryModel> storyList);
     }
 
+    public interface UserNameCallback {
+        void onUserNameLoaded(String name);
+    }
+
     public ChatsRepository() {
         mDatabase = FirebaseDatabase.getInstance().getReference();
         mAuth = FirebaseAuth.getInstance();
@@ -122,6 +126,20 @@ public class ChatsRepository {
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 Log.d("Query Error", error.getMessage());
+            }
+        });
+    }
+
+    public void getUserNameById(String userId, UserNameCallback callback) {
+        mDatabase.child("users").child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String name = snapshot.child("name").getValue(String.class);
+                callback.onUserNameLoaded(name);
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                callback.onUserNameLoaded(null);
             }
         });
     }

@@ -27,12 +27,8 @@ public class ContactsActivity extends AppCompatActivity {
 
 
         contacts = new ArrayList<>() ;
-        contacts.add(new ContactModel(R.drawable.pic1,"Vợ yêu 1" , "Last seen yesterday")) ;
-        contacts.add(new ContactModel(R.drawable.pic2,"Vợ yêu 2" , "Online")) ;
-        contacts.add(new ContactModel(R.drawable.pic3,"Vợ yêu 3" , "Last seen 3 hour ago")) ;
-        contacts.add(new ContactModel(R.drawable.pic4,"Vợ yêu 4" , "Online")) ;
-        contacts.add(new ContactModel(R.drawable.pic5,"Vợ yêu 5" , "Online")) ;
-        contacts.add(new ContactModel(R.drawable.pic6,"Vợ yêu 6" , "Last seen 30 minutes")) ;
+
+
 
         adapter = new CustomAdapterRVContact(contacts);
         binding.rwMessenger.setLayoutManager(new LinearLayoutManager(this));
