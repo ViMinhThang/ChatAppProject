@@ -1,6 +1,8 @@
 package com.project.chatapp.model.Chat;
 
+import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.project.chatapp.R;
 import com.project.chatapp.data.ChatsRepository;
+import com.project.chatapp.model.Contact.ContactModel;
 import com.project.chatapp.screen.chat.MessageActivity;
 
 import java.util.List;
@@ -22,6 +25,7 @@ public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVCh
 
     public CustomAdapterRVChats(List<ChatsModel> listChats) {
         this.listChats = listChats;
+
     }
 
     @NonNull
@@ -33,7 +37,9 @@ public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVCh
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+
         ChatsModel chat = listChats.get(position);
+
         holder.img.setImageResource(chat.getImg());
         holder.name.setText(chat.getName());
         holder.lastMessage.setText(chat.getLastMessage());
@@ -41,12 +47,15 @@ public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVCh
         holder.unread.setText(String.valueOf(chat.getUnread()));
 
         holder.itemView.setOnClickListener(v -> {
+
             ChatsRepository repo = new ChatsRepository();
             repo.getUserIdByPhone(chat.getUserPhoneNumber(), new ChatsRepository.UserIdCallback() {
                 @Override
                 public void onUserIdFound(String userId) {
                     Intent intent = new Intent(holder.itemView.getContext(), MessageActivity.class);
                     intent.putExtra("userId", userId);
+                    intent.putExtra("userName", chat.getName()); // Truyền đúng tên
+                    Log.d("DEBUG", "Sending userName: " + chat.getName());
                     holder.itemView.getContext().startActivity(intent);
                 }
 
@@ -62,6 +71,7 @@ public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVCh
 
     @Override
     public int getItemCount() {
+
         return listChats.size();
     }
 

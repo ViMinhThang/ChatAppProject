@@ -6,6 +6,7 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -55,6 +56,19 @@ public class MessageActivity extends AppCompatActivity {
         chatApdater = new ChatApdater(messageList);
         recyclerView.setAdapter(chatApdater);
         btnSend.setOnClickListener(v -> sendMessage());
+
+// Thêm tên placeHolder
+        TextView chatterName = findViewById(R.id.chatter);
+        String userName = getIntent().getStringExtra("userName");
+        Log.d("DEBUG", "Received userName: " + userName);
+        if (userName != null) {
+            chatterName.setText(userName);
+        } else {
+            Log.d("DEBUG", "userName is null");
+        }
+
+
+
 
         btnBack.setOnClickListener(v -> {
             startActivity(new Intent(this, ChatsActivity.class));

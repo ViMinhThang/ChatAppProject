@@ -1,5 +1,7 @@
 package com.project.chatapp.model.Chat;
 
+import android.util.Log;
+
 public class ChatsModel {
     private int img;
     private String name;
@@ -33,6 +35,8 @@ public class ChatsModel {
     }
 
     public String getName() {
+        Log.d("DEBUG", "ChatsModel returning name: " + name);
+
         return name;
     }
 
