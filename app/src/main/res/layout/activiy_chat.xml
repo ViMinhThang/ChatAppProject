@@ -8,16 +8,17 @@
     android:orientation="vertical">
 
     <!-- Header -->
+    <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#FFFFFF"
         android:elevation="2dp"
-        android:gravity="center_vertical"
         android:orientation="horizontal"
         android:padding="12dp"
-        tools:ignore="UseCompoundDrawables">
+        android:gravity="center_vertical">
 
+        <!-- Back button -->
         <ImageView
             android:id="@+id/back_chat"
             android:layout_width="40dp"
@@ -27,52 +28,24 @@
             android:padding="8dp"
             android:src="@drawable/back" />
 
+        <!-- Username -->
         <TextView
             android:id="@+id/chatter"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_weight="1"
-            android:text="placeHolder"
+            android:layout_marginStart="8dp"
+            android:text="place holder"
             android:textColor="#000000"
             android:textSize="18sp"
             android:textStyle="bold" />
 
+        <!-- Space to push icons to the right -->
         <View
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_weight="1" />
 
-        <ImageView
-            android:id="@+id/call"
-            android:layout_width="25dp"
-            android:layout_height="25dp"
-            android:layout_gravity="center_vertical"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="20dp"
-            android:contentDescription="@string/backbutton"
-            android:src="@drawable/call" />
-
-        <ImageView
-            android:id="@+id/videoCall"
-            android:layout_width="25dp"
-            android:layout_height="25dp"
-            android:layout_gravity="center_vertical"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="20dp"
-            android:contentDescription="@string/backbutton"
-            android:src="@drawable/video_call" />
-
-        <ImageView
-            android:id="@+id/infooo"
-            android:layout_width="25dp"
-            android:layout_height="25dp"
-            android:layout_gravity="center_vertical"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:contentDescription="@string/backbutton"
-            android:src="@drawable/burger" />
-
+        <!-- Search -->
         <ImageView
             android:id="@+id/btnSearch"
             android:layout_width="40dp"
@@ -82,8 +55,37 @@
             android:padding="8dp"
             android:src="@drawable/search" />
 
-    </LinearLayout>
+        <!-- Call -->
+        <ImageView
+            android:id="@+id/call"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Call"
+            android:padding="8dp"
+            android:src="@drawable/call" />
 
+        <!-- Video Call -->
+        <ImageView
+            android:id="@+id/videoCall"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="VideoCall"
+            android:padding="8dp"
+            android:src="@drawable/video_call" />
+
+        <!-- Menu -->
+        <ImageView
+            android:id="@+id/menu"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Menu"
+            android:padding="8dp"
+            android:src="@drawable/burger" />
+
+    </LinearLayout>
     <!-- Search Bar (Hidden by default) -->
     <LinearLayout
         android:id="@+id/searchBarView"

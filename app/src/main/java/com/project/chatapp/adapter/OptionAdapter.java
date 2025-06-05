@@ -5,7 +5,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -23,6 +22,16 @@ public class OptionAdapter extends RecyclerView.Adapter<OptionAdapter.OptionView
         this.optionList = optionList;
     }
 
+    private OnItemClickListener listener;
+
+    public interface OnItemClickListener {
+        void onItemClick(int position);
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
+    }
+
     @NonNull
     @Override
     public OptionViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -37,10 +46,10 @@ public class OptionAdapter extends RecyclerView.Adapter<OptionAdapter.OptionView
         holder.imageViewIcon.setImageResource(option.getIconResId());
         holder.textViewName.setText(option.getName());
 
-        // Xử lý khi click vào mỗi mục (nếu cần)
         holder.itemView.setOnClickListener(v -> {
-            Toast.makeText(holder.itemView.getContext(),
-                    "Clicked: " + option.getName(), Toast.LENGTH_SHORT).show();
+            if (listener != null) {
+                listener.onItemClick(position);
+            }
         });
     }
 

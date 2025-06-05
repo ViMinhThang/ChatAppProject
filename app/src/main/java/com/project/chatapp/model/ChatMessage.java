@@ -1,5 +1,7 @@
 package com.project.chatapp.model;
 
+import com.google.firebase.database.PropertyName;
+
 public class ChatMessage {
     public enum MessageType {
         TEXT,
@@ -8,6 +10,7 @@ public class ChatMessage {
         LOCATION  // thêm kiểu mới
     }
 
+
     private String id;
     private String fromId;
     private String toId;
@@ -15,6 +18,22 @@ public class ChatMessage {
     private String timeStamp;
     private boolean isSender;
     private MessageType messageType;
+    @PropertyName("type")
+    public void setType(String type) {
+        try {
+            this.messageType = MessageType.valueOf(type.toUpperCase());
+        } catch (Exception e) {
+            this.messageType = MessageType.TEXT;
+        }
+    }
+
+    @PropertyName("type")
+    public String getType() {
+        return messageType.name().toLowerCase();
+    }
+    public ChatMessage() {
+
+    }
 
     public ChatMessage(String fromId, String toId, String content, String timeStamp) {
         this.fromId = fromId;
