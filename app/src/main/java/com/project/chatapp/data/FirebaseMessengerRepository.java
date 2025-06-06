@@ -8,9 +8,18 @@ import androidx.annotation.Nullable;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.*;
+import com.google.mlkit.nl.smartreply.SmartReply;
+import com.google.mlkit.nl.smartreply.SmartReplyGenerator;
+import com.google.mlkit.nl.smartreply.SmartReplySuggestion;
+import com.google.mlkit.nl.smartreply.SmartReplySuggestionResult;
+import com.google.mlkit.nl.smartreply.TextMessage;
+
+import com.project.chatapp.model.ChatMessage;
 import com.project.chatapp.utils.TimeUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class FirebaseMessengerRepository {
@@ -21,6 +30,10 @@ public class FirebaseMessengerRepository {
     public FirebaseMessengerRepository() {
         mDatabase = FirebaseDatabase.getInstance().getReference();
         mAuth = FirebaseAuth.getInstance();
+    }
+
+    public interface SmartReplyCallback {
+        void onSuggestions(List<String> suggestions);
     }
 
     public interface UserIdCallback {
@@ -90,18 +103,18 @@ public class FirebaseMessengerRepository {
         String messageId = newMsgRef.getKey();
 
         Map<String, Object> msgData = new HashMap<>();
-        msgData.put("from", from);
-        msgData.put("to", to);
-        msgData.put("message", message);
-        msgData.put("timestamp", timestamp);
+        msgData.put("fromId", from);
+        msgData.put("toId", to);
+        msgData.put("content", message);
+        msgData.put("timeStamp", timestamp);
 
         newMsgRef.setValue(msgData).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 Log.d("SendMessage", "Message sent");
 
                 Map<String, Object> lastMessage = new HashMap<>();
-                lastMessage.put("last_message", from + ":" + message);
-                lastMessage.put("last_message_time", timestamp);
+                lastMessage.put("last_content", from + ":" + message);
+                lastMessage.put("last_content_time", timestamp);
 
                 mDatabase.child("users").child(from).child("chats").child(to).updateChildren(lastMessage);
                 mDatabase.child("users").child(to).child("chats").child(from).updateChildren(lastMessage);
@@ -109,7 +122,50 @@ public class FirebaseMessengerRepository {
                 Log.e("SendMessage", "Failed to send message", task.getException());
             }
         });
+
     }
+
+    public void generateSmartReplies(String chatId, String userLocalId, SmartReplyCallback callback) {
+        DatabaseReference chatRef = mDatabase.child("messages").child(chatId);
+
+        chatRef.orderByKey().limitToLast(10).get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                List<TextMessage> conversation = new ArrayList<>();
+
+                for (DataSnapshot snapshot : task.getResult().getChildren()) {
+                    ChatMessage chatMsg = snapshot.getValue(ChatMessage.class);
+
+                    if (chatMsg != null && !chatMsg.getContent().contains("http")) {
+                        String fromId = chatMsg.getFromId();
+                        String content = chatMsg.getContent();
+                        long timestamp = Long.parseLong(chatMsg.getTimeStamp());
+
+                        if (fromId.equals(userLocalId)) {
+                            conversation.add(TextMessage.createForLocalUser(content, timestamp));
+                        } else {
+                            conversation.add(TextMessage.createForRemoteUser(content, timestamp, fromId));
+                        }
+                    }
+                }
+
+                SmartReply.getClient().suggestReplies(conversation)
+                        .addOnSuccessListener(result -> {
+                            List<String> suggestions = new ArrayList<>();
+                                for (SmartReplySuggestion suggestion : result.getSuggestions()) {
+                                    suggestions.add(suggestion.getText());
+                                }
+                            callback.onSuggestions(suggestions);
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("SmartReply", "Failed to get suggestions", e);
+                            callback.onSuggestions(new ArrayList<>());
+                        });
+            } else {
+                callback.onSuggestions(new ArrayList<>());
+            }
+        });
+    }
+
 
     public void listenForMessages(String fromId, String toId, MessagesCallback callback) {
         String chatId = fromId.compareTo(toId) < 0 ? fromId + "_" + toId : toId + "_" + fromId;
@@ -118,10 +174,10 @@ public class FirebaseMessengerRepository {
         chatRef.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-                String from = snapshot.child("from").getValue(String.class);
-                String to = snapshot.child("to").getValue(String.class);
-                String message = snapshot.child("message").getValue(String.class);
-                String timestamp = snapshot.child("timestamp").getValue(String.class);
+                String from = snapshot.child("fromId").getValue(String.class);
+                String to = snapshot.child("toId").getValue(String.class);
+                String message = snapshot.child("content").getValue(String.class);
+                String timestamp = snapshot.child("timeStamp").getValue(String.class);
                 String messageId = snapshot.getKey();
 
                 if (from != null && to != null && message != null && timestamp != null && messageId != null) {

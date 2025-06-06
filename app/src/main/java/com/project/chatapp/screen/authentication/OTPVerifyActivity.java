@@ -135,11 +135,13 @@ public class OTPVerifyActivity extends AppCompatActivity {
 
         @Override
         public void onVerificationFailed(FirebaseException e) {
+            Log.e("OTP_DEBUG", "Verification failed: " + e.getMessage());
             Toast.makeText(OTPVerifyActivity.this, "Lỗi: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
 
         @Override
         public void onCodeSent(String verificationId, PhoneAuthProvider.ForceResendingToken token) {
+            Log.d("OTP_DEBUG", "onCodeSent: verificationId = " + verificationId);
             OTPVerifyActivity.this.verificationId = verificationId;
         }
 

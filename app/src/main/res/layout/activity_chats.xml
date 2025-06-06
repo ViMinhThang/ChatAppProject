@@ -14,13 +14,10 @@
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigationView"
+        style="@style/BottomNavigationStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:itemPaddingBottom="5dp"
-        app:itemPaddingTop="5dp"
         android:background="#FFFFFF"
-        app:itemIconSize="48dp"
-        app:itemIconTint="@null"
         app:menu="@menu/bottom_nav_menu" />
 
 </LinearLayout>

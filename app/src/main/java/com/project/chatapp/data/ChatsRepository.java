@@ -90,14 +90,13 @@ public class ChatsRepository {
                         }
                     }
 
-                    // Load chats
                     DataSnapshot chatsSnapshot = userSnapshot.child("chats");
                     for (DataSnapshot chatSnapshot : chatsSnapshot.getChildren()) {
                         String chatId = chatSnapshot.getKey();
                         if (chatId == null || chatId.startsWith("group")) continue;
 
-                        String lastMessage = chatSnapshot.child("last_message").getValue(String.class);
-                        String lastMessageTime = chatSnapshot.child("last_message_time").getValue(String.class);
+                        String lastMessage = chatSnapshot.child("last_content").getValue(String.class).toString().split(":")[1];
+                        String lastMessageTime = chatSnapshot.child("last_content_time").getValue(String.class);
                         Long value = chatSnapshot.child("unread").getValue(Long.class);
                         long unreadCount = (value != null) ? value.longValue() : 0L;
 

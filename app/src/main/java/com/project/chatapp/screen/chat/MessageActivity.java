@@ -18,6 +18,7 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.MimeTypeMap;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -49,6 +50,7 @@ import com.project.chatapp.data.FirebaseMessengerRepository;
 import com.project.chatapp.model.ChatMessage;
 import com.project.chatapp.model.CallModel;
 import com.project.chatapp.screen.location.PickLocationActivity;
+import com.project.chatapp.utils.ChatUitls;
 import com.project.chatapp.utils.CloudinaryHelper;
 import com.project.chatapp.utils.TimeUtils;
 import com.google.firebase.database.FirebaseDatabase;
@@ -233,6 +235,19 @@ public class MessageActivity extends AppCompatActivity {
             }
 
         });
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Uploading media...");
+        progressDialog.setCancelable(false);
+        setupPermissionLaunchers();
+        TextView chatter = findViewById(R.id.chatter);
+        ChatsRepository chatsRepository = new ChatsRepository();
+        chatsRepository.getUserNameById(toUserId, name -> {
+            if (name != null) {
+                chatter.setText(name);
+            } else {
+                chatter.setText("Unknown");
+            }
+        });
     }
 
     private void setupFirebase() {
@@ -254,8 +269,20 @@ public class MessageActivity extends AppCompatActivity {
                     recyclerView.scrollToPosition(messageList.size() - 1);
                 }
             });
+            String chatId = ChatUitls.getChatId(userId, toUserId);
+
+            repo.generateSmartReplies(chatId, userId, suggestions -> {
+                runOnUiThread(() -> {
+                    if (!suggestions.isEmpty()) {
+                        etMessage.setHint(String.join(" | ", suggestions));
+                    } else {
+                        etMessage.setHint("Nhập tin nhắn...");
+                    }
+                });
+            });
         });
     }
+
     private void sendCordinate(String corr) {
 
         repo.getCurrentUserId(fromUserId -> {
@@ -263,13 +290,24 @@ public class MessageActivity extends AppCompatActivity {
             etMessage.setText("");
         });
     }
+
     private void sendMessage() {
         String text = etMessage.getText().toString().trim();
         if (text.isEmpty()) return;
 
         repo.getCurrentUserId(fromUserId -> {
+            String chatId = ChatUitls.getChatId(fromUserId, toUserId);
             repo.sendMessage(fromUserId, toUserId, text);
             etMessage.setText("");
+            repo.generateSmartReplies(chatId, fromUserId, suggestions -> {
+                runOnUiThread(() -> {
+                    if (!suggestions.isEmpty()) {
+                        etMessage.setHint(String.join(" | ", suggestions));
+                    } else {
+                        etMessage.setHint("Nhập tin nhắn...");
+                    }
+                });
+            });
         });
     }
 
@@ -606,7 +644,69 @@ public class MessageActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+            if (requestCode == PICK_IMAGE_VIDEO_REQUEST && data != null) {
+                Uri selectedFileUri = data.getData();
+                if (selectedFileUri != null) {
+                    Log.d("MessageActivity", "Selected URI: " + selectedFileUri.toString());
+                    try {
+                        String fileName = "media_" + System.currentTimeMillis() + getFileExtension(selectedFileUri);
+                        File destinationFile = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), fileName);
+                        copyUriToFile(selectedFileUri, destinationFile);
+
+                        Log.d("MessageActivity", "Copied to private storage: " + destinationFile.getAbsolutePath());
+                        uploadMediaToCloudinary(destinationFile.getAbsolutePath());
+                    } catch (IOException e) {
+                        Log.e("MessageActivity", "Error copying file: " + e.getMessage());
+                        Toast.makeText(this, "Error processing selected file", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        } else {
+            Log.d("MessageActivity", "Selection cancelled or failed. Result code: " + resultCode);
+        }
+    }
+
+    private String getFileExtension(Uri uri) {
+        String extension = MimeTypeMap.getSingleton()
+                .getExtensionFromMimeType(getContentResolver().getType(uri));
+        return extension != null ? "." + extension : "";
+    }
+
+    private void copyUriToFile(Uri uri, File destination) throws IOException {
+        try (java.io.InputStream input = getContentResolver().openInputStream(uri);
+             java.io.OutputStream output = new java.io.FileOutputStream(destination)) {
+            byte[] buffer = new byte[4 * 1024];
+            int read;
+            while ((read = input.read(buffer)) != -1) {
+                output.write(buffer, 0, read);
+            }
+            output.flush();
+        }
+    }
+
     interface ChannelCallback {
         void onChannelNameBuilt(String channelName);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (pendingMediaUri != null) {
+            revokeUriPermission(pendingMediaUri,
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (isReturningFromSettings) {
+            isReturningFromSettings = false;
+            // checkAndRequestCameraPermissions();
+        }
     }
 }

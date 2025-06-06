@@ -19,7 +19,6 @@ public class ChatsActivity extends AppCompatActivity {
 
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
 
-        // Mặc định hiển thị ChatsFragment khi mở app
         if (savedInstanceState == null) {
             getSupportFragmentManager()
                     .beginTransaction()
