@@ -57,7 +57,7 @@ public class MessageActivity extends AppCompatActivity {
         recyclerView.setAdapter(chatApdater);
         btnSend.setOnClickListener(v -> sendMessage());
 
-// Thêm tên placeHolder
+// Thêm tên ở placeHolder
         TextView chatterName = findViewById(R.id.chatter);
         String userName = getIntent().getStringExtra("userName");
         Log.d("DEBUG", "Received userName: " + userName);
