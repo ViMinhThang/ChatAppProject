@@ -1,7 +1,7 @@
 package com.project.chatapp.model.Chat;
 
-import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,16 +14,33 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.project.chatapp.R;
 import com.project.chatapp.data.ChatsRepository;
-import com.project.chatapp.model.Contact.ContactModel;
 import com.project.chatapp.screen.chat.MessageActivity;
 
 import java.util.List;
 
 public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVChats.ViewHolder> {
     private List<ChatsModel> listChats;
+    private String currentUserId;
+    private OnChatClickListener listener;
 
-    public CustomAdapterRVChats(List<ChatsModel> listChats) {
+
+    public CustomAdapterRVChats(List<ChatsModel> listChats, String currentUserId) {
         this.listChats = listChats;
+        this.currentUserId = currentUserId;
+    }
+
+    public CustomAdapterRVChats(List<ChatsModel> listChats, String currentUserId, OnChatClickListener listener) {
+        this.listChats = listChats;
+        this.currentUserId = currentUserId;
+        this.listener = listener;
+    }
+
+    public interface OnChatClickListener {
+        void onChatClicked(String userId);
+    }
+
+    public void setOnChatClickListener(OnChatClickListener listener) {
+        this.listener = listener;
     }
 
     @NonNull
@@ -35,23 +52,44 @@ public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVCh
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-
         ChatsModel chat = listChats.get(position);
-
         holder.img.setImageResource(chat.getImg());
         holder.name.setText(chat.getName());
-        holder.lastMessage.setText(chat.getLastMessage());
+
+        String lastMsg = chat.getLastMessage();
+        String preview;
+        if (lastMsg == null) {
+            preview = "";
+        } else if (isImageMessage(lastMsg)) {
+            preview = isSentByMe(lastMsg) ? "Bạn đã gửi một ảnh" : "Bạn đã nhận một ảnh";
+        } else if (isVideoMessage(lastMsg)) {
+            preview = isSentByMe(lastMsg) ? "Bạn đã gửi một video" : "Bạn đã nhận một video";
+        } else if (isLocationMessage(lastMsg)) {
+            preview = isSentByMe(lastMsg) ? "Bạn đã gửi một tọa độ" : "Bạn đã nhận một tọa độ";
+
+        } else {
+            preview = lastMsg;
+        }
+        holder.lastMessage.setText(preview);
         holder.time.setText(chat.getTime());
         holder.unread.setText(String.valueOf(chat.getUnread()));
+
+        long unreadCount = chat.getUnread();
+        if (unreadCount > 0) {
+            holder.unread.setText(String.valueOf(unreadCount));
+            holder.unread.setVisibility(View.VISIBLE);
+        } else {
+            holder.unread.setVisibility(View.GONE);
+        }
 
         holder.itemView.setOnClickListener(v -> {
             ChatsRepository repo = new ChatsRepository();
             repo.getUserIdByPhone(chat.getUserPhoneNumber(), new ChatsRepository.UserIdCallback() {
                 @Override
                 public void onUserIdFound(String userId) {
-                    Intent intent = new Intent(holder.itemView.getContext(), MessageActivity.class);
-                    intent.putExtra("userId", userId);
-                    holder.itemView.getContext().startActivity(intent);
+                    if (listener != null) {
+                        listener.onChatClicked(userId);
+                    }
                 }
 
                 @Override
@@ -67,6 +105,32 @@ public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVCh
     @Override
     public int getItemCount() {
         return listChats.size();
+    }
+
+    private boolean isImageMessage(String content) {
+        if (content == null) return false;
+        String lower = content.toLowerCase();
+        return lower.contains("cloudinary.com") && (lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png") || lower.contains("/image/"));
+    }
+
+    private boolean isLocationMessage(String content) {
+        if (content == null) return false;
+        return content.contains("location:");
+    }
+
+    private boolean isVideoMessage(String content) {
+        if (content == null) return false;
+        String lower = content.toLowerCase();
+        return lower.contains("cloudinary.com") && (lower.endsWith(".mp4") || lower.endsWith(".mov") || lower.endsWith(".3gp") || lower.contains("/video/"));
+    }
+
+    private boolean isSentByMe(String lastMsg) {
+        if (lastMsg == null) return false;
+        if (lastMsg.contains(":")) {
+            String[] parts = lastMsg.split(":", 2);
+            return parts[0].equals(currentUserId);
+        }
+        return false;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
