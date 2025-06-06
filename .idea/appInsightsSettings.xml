@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="AppInsightsSettings">
+    <option name="selectedTabId" value="Firebase Crashlytics" />
     <option name="tabSettings">
       <map>
         <entry key="Firebase Crashlytics">
@@ -9,9 +10,9 @@
               <option name="connection">
                 <ConnectionSetting>
                   <option name="appId" value="com.project.chatapp" />
-                  <option name="mobileSdkAppId" value="1:51991175233:android:e394d0fe8c61e04901e6c0" />
-                  <option name="projectId" value="chatappproject-31d50" />
-                  <option name="projectNumber" value="51991175233" />
+                  <option name="mobileSdkAppId" value="1:749533198056:android:0a1857663028039d66bb5d" />
+                  <option name="projectId" value="chatapplication-88ee7" />
+                  <option name="projectNumber" value="749533198056" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

@@ -2,13 +2,16 @@
 <project version="4">
   <component name="deploymentTargetSelector">
     <selectionStates>
-      <SelectionState runConfigName="app">
+      <SelectionState runConfigName="ChatApp">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-06-04T06:42:43.751798700Z">
+        <DropdownSelection timestamp="2025-06-06T10:38:58.127205600Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\huynh\.android\avd\Small_Phone_2.avd" />
+              <DeviceId pluginId="FirebaseDirectAccess" identifier="reservation=projects/chatapp-1634f/deviceSessions/session-2qjucrbgro2ui" />
             </handle>
+            <template>
+              <DeviceId pluginId="FirebaseDirectAccess" type="TEMPLATE" identifier="model_id=tokay/35" />
+            </template>
           </Target>
         </DropdownSelection>
         <DialogSelection />
