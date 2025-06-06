@@ -1,0 +1,14 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_contacts"
+        android:icon="@drawable/contact_nav"
+        android:title="Contacts" />
+    <item
+        android:id="@+id/nav_chats"
+        android:icon="@drawable/chat_nav"
+        android:title="Chats" />
+    <item
+        android:id="@+id/nav_settings"
+        android:icon="@drawable/menu_nav"
+        android:title="More" />
+</menu>

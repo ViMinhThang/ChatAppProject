@@ -29,6 +29,14 @@ public class PhoneNumberActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mAuth = FirebaseAuth.getInstance();
+        if (mAuth.getCurrentUser() != null) {
+            // Đã đăng nhập, chuyển thẳng vào ChatsActivity
+            Intent intent = new Intent(this, com.project.chatapp.screen.chat.ChatsActivity.class);
+            startActivity(intent);
+            finish();
+            return;
+        }
         setContentView(R.layout.activity_phone_number_input);
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();

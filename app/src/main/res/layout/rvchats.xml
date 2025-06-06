@@ -40,7 +40,10 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:text="@string/em_an_com_chua"
-            android:textSize="15sp" />
+            android:textSize="15sp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:singleLine="true" />
     </LinearLayout>
 
     <LinearLayout

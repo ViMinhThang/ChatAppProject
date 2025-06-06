@@ -11,7 +11,6 @@ public class ChatsModel {
     String userPhoneNumber;
     private String userId;
 
-
     public ChatsModel(int img, String status, String name, String lastMessage, String time, long unread, String userPhoneNumber, String userId) {
         this.img = img;
         this.name = name;
