@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.FirebaseDatabase;
+import com.project.chatapp.NotificationService;
 import com.project.chatapp.R;
 import com.project.chatapp.model.CallModel;
 import com.google.firebase.database.DataSnapshot;
@@ -43,9 +44,18 @@ public class MainActivity extends AppCompatActivity {
             finish();
             return;
         }
+
         Log.d("CALL_DEBUG", "MainActivity onCreate chạy!");
         setContentView(R.layout.hello);
-
+        // Khởi động service thông báo nếu người dùng đã xác thực
+        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+            Intent serviceIntent = new Intent(this, NotificationService.class);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent);
+            } else {
+                startService(serviceIntent);
+            }
+        }
         // 🔔 Xin quyền gửi thông báo nếu Android 13 trở lên
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)

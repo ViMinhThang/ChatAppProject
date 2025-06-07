@@ -113,16 +113,39 @@ public class FirebaseMessengerRepository {
                 Log.d("SendMessage", "Message sent");
 
                 Map<String, Object> lastMessage = new HashMap<>();
-                lastMessage.put("last_content", from + ":" + message);
+                lastMessage.put("last_content", message); // Chỉ lưu nội dung tin nhắn
                 lastMessage.put("last_content_time", timestamp);
 
+                // Cập nhật cho cả người gửi và người nhận
                 mDatabase.child("users").child(from).child("chats").child(to).updateChildren(lastMessage);
                 mDatabase.child("users").child(to).child("chats").child(from).updateChildren(lastMessage);
+
+                // Tăng unread_count cho người nhận
+                mDatabase.child("users").child(to).child("chats").child(from)
+                        .child("unread_count").runTransaction(new Transaction.Handler() {
+                            @NonNull
+                            @Override
+                            public Transaction.Result doTransaction(@NonNull MutableData mutableData) {
+                                Long unread = mutableData.getValue(Long.class);
+                                if (unread == null) {
+                                    unread = 0L;
+                                }
+                                mutableData.setValue(unread + 1);
+                                return Transaction.success(mutableData);
+                            }
+
+                            @Override
+                            public void onComplete(@Nullable DatabaseError databaseError, boolean committed,
+                                                   @Nullable DataSnapshot dataSnapshot) {
+                                if (databaseError != null) {
+                                    Log.e("SendMessage", "Transaction failed", databaseError.toException());
+                                }
+                            }
+                        });
             } else {
                 Log.e("SendMessage", "Failed to send message", task.getException());
             }
         });
-
     }
 
     public void generateSmartReplies(String chatId, String userLocalId, SmartReplyCallback callback) {
