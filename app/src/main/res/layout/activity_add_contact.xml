@@ -4,178 +4,137 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
+    android:background="@color/white"
     android:orientation="vertical"
+    android:fitsSystemWindows="true"
     tools:context=".screen.chat.AddContactActivity">
 
-    <!-- Toolbar cố định -->
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
+    <LinearLayout
+        android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="#FFFFFF"
-        android:elevation="2dp">
+        android:layout_height="wrap_content"
+        android:padding="10dp">
 
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="10dp"
+            android:src="@drawable/back" />
 
-            <ImageView
-                android:id="@+id/btnBack"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_centerVertical="true"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:focusable="true"
-                android:src="@android:drawable/ic_menu_close_clear_cancel"
-                android:tint="#0068FF" />
+        <TextView
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textSize="25dp"
+            android:layout_marginLeft="20dp"
+            android:text="Add Contact"
+            android:textStyle="bold" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:text="Thêm liên hệ"
-                android:textColor="#0068FF"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+        <TextView
+            android:id="@+id/btnSave"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginRight="20dp"
+            android:text="Save"
+            android:textColor="#0068FF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
-            <TextView
-                android:id="@+id/btnSave"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="16dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:padding="8dp"
-                android:text="Lưu"
-                android:textColor="#0068FF"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-        </RelativeLayout>
-    </androidx.appcompat.widget.Toolbar>
-
-    <!-- Phần nội dung chính -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:gravity="center_horizontal"
+        android:layout_height="wrap_content"
+        android:gravity="center"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="20dp">
 
-        <!-- Phần ảnh đại diện -->
+        <ImageView
+            android:id="@+id/imgAvatar"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:src="@drawable/user_info" />
+
+        <TextView
+            android:id="@+id/btnChangePhoto"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Change photo"
+            android:textColor="#0068FF"
+            android:textSize="16sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
             android:orientation="vertical"
-            android:paddingTop="16dp"
-            android:paddingBottom="32dp">
-
-            <com.google.android.material.imageview.ShapeableImageView
-                android:id="@+id/imgAvatar"
-                android:layout_width="96dp"
-                android:layout_height="96dp"
-                android:scaleType="centerCrop"
-                android:src="@drawable/default_avatar"
-                app:shapeAppearanceOverlay="@style/CircleImageView"
-                app:strokeColor="#E0E0E0"
-                app:strokeWidth="1dp" />
+            android:layout_marginBottom="16dp">
 
             <TextView
-                android:id="@+id/btnChangePhoto"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:padding="8dp"
-                android:text="Thay đổi ảnh"
-                android:textColor="#0068FF"
-                android:textSize="14sp" />
-        </LinearLayout>
+                android:text="Name"
+                android:textSize="16sp"
+                android:textColor="#757575"
+                android:layout_marginBottom="4dp"/>
 
-        <!-- Phần thông tin liên hệ -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardInfo"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="8dp"
-            app:cardElevation="1dp"
-            app:strokeColor="#E0E0E0"
-            app:strokeWidth="0.5dp">
-
-            <LinearLayout
+            <EditText
+                android:id="@+id/contact_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:inputType="textPersonName"
+                android:padding="12dp"
+                android:background="@android:drawable/edit_text"
+                android:maxLines="1" />
 
-                <!-- Trường tên liên hệ -->
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/nameInputLayout"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    android:hint="Tên liên hệ"
-                    app:boxStrokeColor="#0068FF"
-                    app:endIconMode="clear_text"
-                    app:hintTextColor="#0068FF">
+            <TextView
+                android:id="@+id/nameError"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FF0000"
+                android:textSize="12sp"
+                android:visibility="gone"/>
+        </LinearLayout>
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/contact_name"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="textPersonName"
-                        android:maxLines="1" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <!-- Trường số điện thoại -->
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/phoneInputLayout"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Số điện thoại"
-                    app:boxStrokeColor="#0068FF"
-                    app:endIconMode="clear_text"
-                    app:hintTextColor="#0068FF"
-                    app:prefixText="+84 ">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/contact_phone"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="phone"
-                        android:maxLines="1" />
-                </com.google.android.material.textfield.TextInputLayout>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Khoảng trống -->
-        <View
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
-    </LinearLayout>
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-    <!-- Nút lưu liên hệ -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/save_contact_button"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_margin="16dp"
-        android:backgroundTint="#0068FF"
-        android:text="Lưu liên hệ"
-        android:textColor="#FFFFFF"
-        android:textSize="16sp"
-        app:cornerRadius="28dp"
-        app:elevation="2dp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Phone number"
+                android:textSize="16sp"
+                android:textColor="#757575"
+                android:layout_marginBottom="4dp"/>
+
+            <EditText
+                android:id="@+id/contact_phone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="phone"
+                android:padding="12dp"
+                android:background="@android:drawable/edit_text"
+                android:maxLines="1" />
+
+            <TextView
+                android:id="@+id/phoneError"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FF0000"
+                android:textSize="12sp"
+                android:visibility="gone"/>
+        </LinearLayout>
+    </LinearLayout>
 
 </LinearLayout>

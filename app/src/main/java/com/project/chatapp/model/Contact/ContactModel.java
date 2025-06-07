@@ -1,15 +1,17 @@
 package com.project.chatapp.model.Contact;
 
-public class ContactModel {
+import java.io.Serializable;
+
+public class ContactModel implements Serializable {
     private int img;
     private String name;
-    private int phone;
+    private String phone;
     private String status;
 
     public ContactModel() {
     }
 
-    public ContactModel(int img, String name, int phone, String status) {
+    public ContactModel(int img, String name, String phone, String status) {
         this.img = img;
         this.name = name;
         this.phone = phone;
@@ -40,12 +42,11 @@ public class ContactModel {
         this.img = img;
     }
 
-    public int getPhone() {
+    public String getPhone() {
         return phone;
     }
 
-    public void setPhone(int phone) {
+    public void setPhone(String phone) {
         this.phone = phone;
     }
-
 }

@@ -14,14 +14,11 @@ import com.project.chatapp.R;
 import com.project.chatapp.databinding.ActivityAddContactBinding;
 import com.project.chatapp.model.Contact.ContactModel;
 
-import java.io.Serializable;
-
 public class AddContactActivity extends AppCompatActivity {
 
     private ActivityAddContactBinding binding;
     private static final int PICK_IMAGE = 100;
     private Uri imageUri;
-    private int avatarResource = R.drawable.change_avatar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,9 +32,7 @@ public class AddContactActivity extends AppCompatActivity {
         binding.imgAvatar.setOnClickListener(imagePickerListener);
         binding.btnChangePhoto.setOnClickListener(imagePickerListener);
 
-        View.OnClickListener saveListener = v -> saveContact();
-        binding.btnSave.setOnClickListener(saveListener);
-        binding.saveContactButton.setOnClickListener(saveListener);
+        binding.btnSave.setOnClickListener(v -> saveContact());
     }
 
     private void openGallery() {
@@ -51,49 +46,35 @@ public class AddContactActivity extends AppCompatActivity {
         if (resultCode == RESULT_OK && requestCode == PICK_IMAGE && data != null) {
             imageUri = data.getData();
             binding.imgAvatar.setImageURI(imageUri);
-
         }
     }
 
     private void saveContact() {
         String name = binding.contactName.getText().toString().trim();
-        String phoneStr = binding.contactPhone.getText().toString().trim();
+        String phone = binding.contactPhone.getText().toString().trim();
 
         if (name.isEmpty()) {
-            binding.nameInputLayout.setError("Vui lòng nhập tên liên hệ");
+            Toast.makeText(this, "Please enter name", Toast.LENGTH_SHORT).show();
             return;
-        } else {
-            binding.nameInputLayout.setError(null);
         }
 
-        if (phoneStr.isEmpty()) {
-            binding.phoneInputLayout.setError("Vui lòng nhập số điện thoại");
+        if (phone.isEmpty()) {
+            Toast.makeText(this, "Please enter phone number", Toast.LENGTH_SHORT).show();
             return;
-        } else {
-            binding.phoneInputLayout.setError(null);
         }
 
-        try {
-            int phone = Integer.parseInt(phoneStr);
+        ContactModel newContact = new ContactModel(
+                R.drawable.user_info,
+                name,
+                phone,
+                "Online"
+        );
 
-            ContactModel newContact = new ContactModel(avatarResource, name, phone, "Online"
-            );
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra("new_contact", newContact);
+        setResult(RESULT_OK, resultIntent);
 
-            Intent resultIntent = new Intent();
-            resultIntent.putExtra("new_contact", (Serializable) newContact);
-            setResult(RESULT_OK, resultIntent);
-
-            Toast.makeText(this, "Đã thêm liên hệ thành công", Toast.LENGTH_SHORT).show();
-            finish();
-
-        } catch (NumberFormatException e) {
-            binding.phoneInputLayout.setError("Số điện thoại không hợp lệ");
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        binding = null;
+        Toast.makeText(this, "Contact added successfully", Toast.LENGTH_SHORT).show();
+        finish();
     }
 }
