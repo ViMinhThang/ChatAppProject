@@ -8,6 +8,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.project.chatapp.R;
 
 import java.util.List;
@@ -31,8 +32,19 @@ public class CustomAdapterRVContact extends RecyclerView.Adapter<CustomAdapterRV
         ContactModel contact = listContact.get(position);
         holder.txtName.setText(contact.getName());
         holder.txtStatus.setText(contact.getStatus());
-        holder.imgAvatar.setImageResource(contact.getAvatar());
+       // holder.imgAvatar.setImageResource(contact.getAvatar());
+        //Lấy avatar từ database
+        Glide.with(holder.imgAvatar.getContext())
+                .load(contact.getProfile_picture())
+                .placeholder(R.drawable.ic_avatar_placeholder)
+                .into(holder.imgAvatar);
     }
+    // Cập nhật khi tìm được
+    public void updateData(List<ContactModel> newList) {
+        this.listContact = newList;
+        notifyDataSetChanged();
+    }
+
 
     @Override
     public int getItemCount() {

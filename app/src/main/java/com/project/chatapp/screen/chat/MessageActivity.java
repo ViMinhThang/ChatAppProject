@@ -149,15 +149,15 @@ public class MessageActivity extends AppCompatActivity {
     private void setupEventListeners() {
         btnSend.setOnClickListener(v -> sendMessage());
 
-// Thêm tên ở placeHolder
-        TextView chatterName = findViewById(R.id.chatter);
-        String userName = getIntent().getStringExtra("userName");
-        Log.d("DEBUG", "Received userName: " + userName);
-        if (userName != null) {
-            chatterName.setText(userName);
-        } else {
-            Log.d("DEBUG", "userName is null");
-        }
+//// Thêm tên ở placeHolder
+//        TextView chatterName = findViewById(R.id.chatter);
+//        String userName = getIntent().getStringExtra("userName");
+//        Log.d("DEBUG", "Received userName: " + userName);
+//        if (userName != null) {
+//            chatterName.setText(userName);
+//        } else {
+//            Log.d("DEBUG", "userName is null");
+//        }
 
 
         btnBack.setOnClickListener(v -> {
