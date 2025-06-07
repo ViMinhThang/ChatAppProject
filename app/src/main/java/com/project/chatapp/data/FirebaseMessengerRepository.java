@@ -4,16 +4,12 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.*;
 import com.google.mlkit.nl.smartreply.SmartReply;
-import com.google.mlkit.nl.smartreply.SmartReplyGenerator;
 import com.google.mlkit.nl.smartreply.SmartReplySuggestion;
-import com.google.mlkit.nl.smartreply.SmartReplySuggestionResult;
 import com.google.mlkit.nl.smartreply.TextMessage;
-
 import com.project.chatapp.model.ChatMessage;
 import com.project.chatapp.utils.TimeUtils;
 

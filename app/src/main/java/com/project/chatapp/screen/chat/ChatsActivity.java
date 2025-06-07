@@ -1,9 +1,7 @@
 package com.project.chatapp.screen.chat;
 
-import android.content.Intent;
-import android.os.Bundle;
 
-import androidx.annotation.NonNull;
+import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 

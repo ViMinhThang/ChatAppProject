@@ -25,7 +25,6 @@ import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
@@ -42,7 +41,6 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.project.chatapp.R;
 import com.project.chatapp.adapter.ChatApdater;
 import com.project.chatapp.data.ChatsRepository;
@@ -54,7 +52,6 @@ import com.project.chatapp.utils.ChatUitls;
 import com.project.chatapp.utils.CloudinaryHelper;
 import com.project.chatapp.utils.TimeUtils;
 import com.google.firebase.database.FirebaseDatabase;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
