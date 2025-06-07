@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.project.chatapp.R;
 
 import java.util.List;
@@ -35,8 +36,10 @@ public class CustomAdapterRVContact extends RecyclerView.Adapter<CustomAdapterRV
        // holder.imgAvatar.setImageResource(contact.getAvatar());
         //Lấy avatar từ database
         Glide.with(holder.imgAvatar.getContext())
-                .load(contact.getProfile_picture())
+                .load(contact.getProfile_picture() + "?timestamp=" + System.currentTimeMillis())
                 .placeholder(R.drawable.ic_avatar_placeholder)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .skipMemoryCache(true)
                 .into(holder.imgAvatar);
     }
     // Cập nhật khi tìm được

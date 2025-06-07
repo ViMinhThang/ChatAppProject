@@ -1,4 +1,4 @@
-package com.project.chatapp.screen.chat;
+package com.project.chatapp.screen.contact;
 
 import com.project.chatapp.model.Contact.ContactModel;
 
