@@ -63,6 +63,10 @@
             android:name=".screen.chat.ChatsActivity"
             android:exported="true" />
         <activity
+            android:name=".screen.chat.AddContactActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
             android:name=".screen.authentication.PhoneNumberActivity"
             android:exported="false" />
         <activity
