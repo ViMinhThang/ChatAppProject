@@ -4,14 +4,11 @@
     <selectionStates>
       <SelectionState runConfigName="ChatApp">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-06-06T10:38:58.127205600Z">
+        <DropdownSelection timestamp="2025-06-08T12:32:23.257713200Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="FirebaseDirectAccess" identifier="reservation=projects/chatapp-1634f/deviceSessions/session-2qjucrbgro2ui" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=Y9X4EIVSMRP7SCFA" />
             </handle>
-            <template>
-              <DeviceId pluginId="FirebaseDirectAccess" type="TEMPLATE" identifier="model_id=tokay/35" />
-            </template>
           </Target>
         </DropdownSelection>
         <DialogSelection />
