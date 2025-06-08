@@ -1,18 +1,41 @@
 package com.project.chatapp.screen.chat;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.project.chatapp.NotificationService;
 import com.project.chatapp.R;
+import com.project.chatapp.data.FirebaseMessengerRepository;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class ChatsActivity extends AppCompatActivity {
 
     private BottomNavigationView bottomNavigationView;
+    private DatabaseReference mDatabase;
+    private FirebaseMessengerRepository repo;
+    private Map<String, Long> unreadCounts = new HashMap<>();
+    private Map<String, String> chatNames = new HashMap<>();
+    private static final String CHANNEL_ID = "ChatAppNotifications";
+    private int notificationId = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,6 +43,8 @@ public class ChatsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_chats);
 
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
+        mDatabase = FirebaseDatabase.getInstance().getReference();
+        repo = new FirebaseMessengerRepository();
 
         if (savedInstanceState == null) {
             getSupportFragmentManager()
@@ -47,5 +72,119 @@ public class ChatsActivity extends AppCompatActivity {
             }
             return false;
         });
+
+        createNotificationChannel();
+        startNotificationService();
+        loadChatNames();
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "Chat Notifications";
+            String description = "Notifications for new chat messages";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+            channel.setDescription(description);
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
+    private void startNotificationService() {
+        try {
+            Intent serviceIntent = new Intent(this, NotificationService.class);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent);
+            } else {
+                startService(serviceIntent);
+            }
+
+            Log.d("ChatsActivity", "NotificationService started");
+        } catch (Exception e) {
+            Log.e("ChatsActivity", "Failed to start NotificationService", e);
+        }
+    }
+
+    private void loadChatNames() {
+        repo.getCurrentUserId(userId -> {
+            if (userId == null) {
+                Log.e("ChatsActivity", "Cannot load chat names - user ID is null");
+                return;
+            }
+
+            DatabaseReference userChatsRef = mDatabase.child("users").child(userId).child("chats");
+            userChatsRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    for (DataSnapshot chatSnapshot : snapshot.getChildren()) {
+                        String chatId = chatSnapshot.getKey();
+                        if (chatId != null) {
+                            mDatabase.child("users").child(chatId).child("name")
+                                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                            String name = dataSnapshot.getValue(String.class);
+                                            if (name != null) {
+                                                chatNames.put(chatId, name);
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+                                            Log.e("ChatsActivity", "Failed to load user name: " + error.getMessage());
+                                        }
+                                    });
+
+                            // Lấy số tin nhắn chưa đọc hiện tại
+                            Long unreadCount = chatSnapshot.child("unread_count").getValue(Long.class);
+                            if (unreadCount != null) {
+                                unreadCounts.put(chatId, unreadCount);
+                            }
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    Log.e("ChatsActivity", "Failed to load chats: " + error.getMessage());
+                }
+            });
+        });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // Reset unread counts when returning to ChatsActivity
+        repo.getCurrentUserId(userId -> {
+            if (userId != null) {
+                DatabaseReference userChatsRef = mDatabase.child("users").child(userId).child("chats");
+                userChatsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        for (DataSnapshot chatSnapshot : snapshot.getChildren()) {
+                            String chatId = chatSnapshot.getKey();
+                            if (chatId != null) {
+                                chatSnapshot.getRef().child("unread_count").setValue(0);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e("ChatsActivity", "Failed to reset unread counts: " + error.getMessage());
+                    }
+                });
+            }
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Không dừng NotificationService khi thoát khỏi ChatsActivity
+        // để service tiếp tục lắng nghe tin nhắn mới ở background
     }
 }
