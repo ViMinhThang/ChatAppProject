@@ -43,6 +43,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.database.DatabaseReference;
 import com.project.chatapp.R;
 import com.project.chatapp.adapter.ChatApdater;
 import com.project.chatapp.data.ChatsRepository;
@@ -83,7 +84,7 @@ public class MessageActivity extends AppCompatActivity {
     private ChatApdater chatApdater;
     private FirebaseMessengerRepository repo;
     private String toUserId;
-
+    private DatabaseReference mDatabase;
     // Search
     private ActivityResultLauncher<Intent> settingsLauncher;
     private ActivityResultLauncher<String[]> requestPermissionLauncher;
@@ -104,18 +105,26 @@ public class MessageActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activiy_chat);
+        mDatabase = FirebaseDatabase.getInstance().getReference();
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
         toUserId = getIntent().getStringExtra("userId");
-
+        repo = new FirebaseMessengerRepository();
         initViews();
         setupRecyclerView();
         setupFirebase();
         setupEventListeners();
         setupPermissionLaunchers();
+        repo.getCurrentUserId(myUserId -> {
+            if (myUserId != null) {
+                mDatabase.child("users").child(myUserId).child("chats").child(toUserId)
+                        .child("unread_count").setValue(0)
+                        .addOnFailureListener(e -> Log.e("MessageActivity", "Failed to reset unread_count", e));
+            }
+        });
     }
 
     private void initViews() {
