@@ -47,24 +47,9 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d("CALL_DEBUG", "MainActivity onCreate chạy!");
         setContentView(R.layout.hello);
-        // Khởi động service thông báo nếu người dùng đã xác thực
-        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
-            Intent serviceIntent = new Intent(this, NotificationService.class);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(serviceIntent);
-            } else {
-                startService(serviceIntent);
-            }
-        }
-        // 🔔 Xin quyền gửi thông báo nếu Android 13 trở lên
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                    != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
-                        REQUEST_NOTIFICATION_PERMISSION);
-            }
-        }
+
+        // Kiểm tra quyền thông báo
+        checkNotificationPermission();
 
         FirebaseApp.initializeApp(this);
         if (FirebaseApp.getApps(this).size() == 0) {
@@ -105,6 +90,40 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void checkNotificationPermission() {
+        // Kiểm tra quyền thông báo trên Android 13+ (API 33+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                // Yêu cầu quyền nếu chưa có
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        REQUEST_NOTIFICATION_PERMISSION);
+            } else {
+                // Đã có quyền, khởi động service
+                startNotificationService();
+            }
+        } else {
+            // Android 12 trở xuống không cần xin quyền riêng cho thông báo
+            startNotificationService();
+        }
+    }
+
+    private void startNotificationService() {
+        // Khởi động service thông báo nếu người dùng đã xác thực
+        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+            Log.d("NotificationService", "Khởi động NotificationService từ MainActivity");
+            Intent serviceIntent = new Intent(this, NotificationService.class);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent);
+            } else {
+                startService(serviceIntent);
+            }
+        } else {
+            Log.d("NotificationService", "Người dùng chưa đăng nhập, không khởi động service");
+        }
+    }
+
     private void listenForIncomingCall() {
         FirebaseMessengerRepository repo = new FirebaseMessengerRepository();
         repo.getCurrentUserId(myUserId -> {
@@ -114,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             DatabaseReference callRef = com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
-                .child("calls").child(myUserId);
+                    .child("calls").child(myUserId);
             callRef.addValueEventListener(new com.google.firebase.database.ValueEventListener() {
                 @Override
                 public void onDataChange(com.google.firebase.database.DataSnapshot snapshot) {
@@ -141,7 +160,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -149,8 +167,11 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == REQUEST_NOTIFICATION_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Log.d("Permission", "POST_NOTIFICATIONS permission granted");
+                startNotificationService();
             } else {
                 Log.d("Permission", "POST_NOTIFICATIONS permission denied");
+                // Thông báo cho người dùng biết về việc thiếu quyền thông báo
+                // Có thể hiển thị dialog giải thích tại sao cần quyền này
             }
         }
     }

@@ -1,5 +1,7 @@
 package com.project.chatapp.data;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -64,7 +66,17 @@ public class FirebaseMessengerRepository {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for (DataSnapshot userSnapshot : snapshot.getChildren()) {
-                    callback.onUserIdReceived(userSnapshot.getKey());
+                    String userId = userSnapshot.getKey();
+                    callback.onUserIdReceived(userId);
+
+                    // Lưu userId vào SharedPreferences
+                    Context context = getApplicationContext();
+                    if (context != null) {
+                        SharedPreferences prefs = context.getSharedPreferences("ChatAppPrefs", Context.MODE_PRIVATE);
+                        SharedPreferences.Editor editor = prefs.edit();
+                        editor.putString("currentUserId", userId);
+                        editor.apply();
+                    }
                     return;
                 }
                 callback.onUserIdReceived(null); // Không tìm thấy
@@ -76,6 +88,16 @@ public class FirebaseMessengerRepository {
                 callback.onUserIdReceived(null);
             }
         });
+    }
+
+    // Thêm phương thức để lấy context
+    private Context getApplicationContext() {
+        try {
+            return com.google.firebase.FirebaseApp.getInstance().getApplicationContext();
+        } catch (Exception e) {
+            Log.e("FirebaseRepository", "Failed to get application context", e);
+            return null;
+        }
     }
 
     public void getUserNameById(String userId, UserNameCallback callback) {
@@ -174,9 +196,9 @@ public class FirebaseMessengerRepository {
                 SmartReply.getClient().suggestReplies(conversation)
                         .addOnSuccessListener(result -> {
                             List<String> suggestions = new ArrayList<>();
-                                for (SmartReplySuggestion suggestion : result.getSuggestions()) {
-                                    suggestions.add(suggestion.getText());
-                                }
+                            for (SmartReplySuggestion suggestion : result.getSuggestions()) {
+                                suggestions.add(suggestion.getText());
+                            }
                             callback.onSuggestions(suggestions);
                         })
                         .addOnFailureListener(e -> {
@@ -188,7 +210,6 @@ public class FirebaseMessengerRepository {
             }
         });
     }
-
 
     public void listenForMessages(String fromId, String toId, MessagesCallback callback) {
         String chatId = fromId.compareTo(toId) < 0 ? fromId + "_" + toId : toId + "_" + fromId;

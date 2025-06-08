@@ -1,5 +1,6 @@
 package com.project.chatapp;
 
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -10,6 +11,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.SystemClock;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -39,16 +41,17 @@ public class NotificationService extends Service {
     public void onCreate() {
         super.onCreate();
         try {
-            createNotificationChannel();
-            mDatabase = FirebaseDatabase.getInstance().getReference();
             repo = new FirebaseMessengerRepository();
+            mDatabase = FirebaseDatabase.getInstance().getReference();
 
-            // Tạo notification trước khi gọi startForeground
-            Notification notification = getForegroundNotification();
-            startForeground(SERVICE_ID, notification);
+            // Tạo kênh thông báo ngay khi khởi động service
+            createNotificationChannel();
 
-            // Lấy userId hiện tại từ SharedPreferences
-            SharedPreferences prefs = getSharedPreferences("ChatAppPrefs", MODE_PRIVATE);
+            // Hiển thị thông báo foreground để dịch vụ không bị kill
+            startForeground(SERVICE_ID, createForegroundNotification());
+
+            // Thử lấy ID người dùng từ SharedPreferences trước
+            SharedPreferences prefs = getSharedPreferences("ChatAppPrefs", Context.MODE_PRIVATE);
             currentUserId = prefs.getString("currentUserId", null);
 
             // Nếu không có userId, thử lấy từ FirebaseAuth
@@ -56,7 +59,7 @@ public class NotificationService extends Service {
                 repo.getCurrentUserId(userId -> {
                     if (userId != null) {
                         currentUserId = userId;
-                        // Lưu lại để lần sau dùng
+                        // Lưu vào SharedPreferences để dùng sau này
                         SharedPreferences.Editor editor = prefs.edit();
                         editor.putString("currentUserId", userId);
                         editor.apply();
@@ -73,10 +76,10 @@ public class NotificationService extends Service {
                 listenForNewMessages();
             }
         } catch (SecurityException e) {
-            Log.e("NotificationService", "Không thể khởi động foreground service: " + e.getMessage());
+            Log.e("NotificationService", "Lỗi bảo mật: " + e.getMessage());
             stopSelf();
         } catch (Exception e) {
-            Log.e("NotificationService", "Lỗi khởi động service: " + e.getMessage());
+            Log.e("NotificationService", "Lỗi khởi tạo service: " + e.getMessage());
             stopSelf();
         }
     }
@@ -91,39 +94,38 @@ public class NotificationService extends Service {
         userChatsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (!snapshot.exists()) {
-                    Log.d("NotificationService", "Không có chat nào để tải tên");
-                    return;
-                }
-
                 for (DataSnapshot chatSnapshot : snapshot.getChildren()) {
                     String userId = chatSnapshot.getKey();
                     if (userId != null) {
-                        mDatabase.child("users").child(userId).child("name")
-                                .addListenerForSingleValueEvent(new ValueEventListener() {
-                                    @Override
-                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                        String name = snapshot.getValue(String.class);
-                                        if (name != null) {
-                                            chatNames.put(userId, name);
-                                            Log.d("NotificationService", "Đã lấy tên: " + name + " cho userId: " + userId);
-                                        }
-                                    }
-
-                                    @Override
-                                    public void onCancelled(@NonNull DatabaseError error) {
-                                        Log.e("NotificationService", "Lỗi khi lấy tên người dùng: " + error.getMessage());
-                                    }
-                                });
+                        loadUserName(userId);
                     }
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("NotificationService", "Lỗi khi tải tên chat: " + error.getMessage());
+                Log.e("NotificationService", "Lỗi khi tải danh sách chat: " + error.getMessage());
             }
         });
+    }
+
+    private void loadUserName(String userId) {
+        mDatabase.child("users").child(userId).child("name")
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        String name = snapshot.getValue(String.class);
+                        if (name != null) {
+                            chatNames.put(userId, name);
+                            Log.d("NotificationService", "Đã tải tên người dùng: " + userId + " = " + name);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e("NotificationService", "Lỗi khi tải tên người dùng: " + error.getMessage());
+                    }
+                });
     }
 
     private void listenForNewMessages() {
@@ -135,35 +137,24 @@ public class NotificationService extends Service {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for (DataSnapshot chatSnapshot : snapshot.getChildren()) {
                     String chatId = chatSnapshot.getKey();
-                    if (chatId == null) continue;
-
-                    String lastContent = chatSnapshot.child("last_content").getValue(String.class);
-                    String lastContentTime = chatSnapshot.child("last_content_time").getValue(String.class);
                     Long unreadCount = chatSnapshot.child("unread_count").getValue(Long.class);
+                    String lastContent = chatSnapshot.child("last_content").getValue(String.class);
 
-                    if (lastContent == null || lastContentTime == null || unreadCount == null) continue;
-
-                    SharedPreferences prefs = getSharedPreferences("ChatAppPrefs", MODE_PRIVATE);
-                    String lastDisplayedTime = prefs.getString("last_displayed_time_" + chatId, "0");
-
-                    if (Long.parseLong(lastContentTime) > Long.parseLong(lastDisplayedTime) && unreadCount > 0) {
-                        // Người nhận tin nhắn
-                        if (!chatId.equals(currentUserId)) {
-                            String senderName = chatNames.getOrDefault(chatId, "Người dùng ChatApp");
-                            showNotification(chatId, senderName, lastContent);
-
-                            // Lưu thời gian hiển thị thông báo mới nhất
-                            SharedPreferences.Editor editor = prefs.edit();
-                            editor.putString("last_displayed_time_" + chatId, lastContentTime);
-                            editor.apply();
+                    if (chatId != null && unreadCount != null && lastContent != null && unreadCount > 0) {
+                        String fromName = chatNames.get(chatId);
+                        if (fromName == null) {
+                            // Nếu chưa có tên, tải tên ngay
+                            loadUserName(chatId);
+                            fromName = chatId;  // Tạm thời dùng ID
                         }
+                        showNotification(chatId, fromName, lastContent);
                     }
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("NotificationService", "Database error: " + error.getMessage());
+                Log.e("NotificationService", "Lỗi khi lắng nghe tin nhắn mới: " + error.getMessage());
             }
         });
     }
@@ -174,51 +165,29 @@ public class NotificationService extends Service {
             return;
         }
 
-        // Đảm bảo fromName không null
         if (fromName == null) {
-            fromName = "Người dùng ChatApp";
+            fromName = "Người dùng";
         }
 
         Intent intent = new Intent(this, MessageActivity.class);
         intent.putExtra("userId", chatId);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
-        PendingIntent pendingIntent = PendingIntent.getActivity(
-                this,
+        PendingIntent pendingIntent = PendingIntent.getActivity(this,
                 chatId.hashCode(),
                 intent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
+                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
 
-        try {
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                    .setSmallIcon(R.drawable.ic_avatar_placeholder)
-                    .setContentTitle(fromName)
-                    .setContentText(message)
-                    .setPriority(NotificationCompat.PRIORITY_HIGH)
-                    .setContentIntent(pendingIntent)
-                    .setAutoCancel(true);
-
-            NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            manager.notify(NOTIFICATION_ID_BASE + chatId.hashCode(), builder.build());
-        } catch (Exception e) {
-            Log.e("NotificationService", "Lỗi hiển thị thông báo: " + e.getMessage());
-        }
-    }
-
-    private Notification getForegroundNotification() {
-        Intent notificationIntent = new Intent(this, MessageActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(
-                this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE
-        );
-
-        return new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("ChatApp đang chạy")
-                .setContentText("Đang lắng nghe tin nhắn mới")
-                .setSmallIcon(R.drawable.ic_avatar_placeholder)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setContentTitle(fromName)
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentIntent(pendingIntent)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .build();
+                .setAutoCancel(true);
+
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(NOTIFICATION_ID_BASE + chatId.hashCode(), builder.build());
     }
 
     private void createNotificationChannel() {
@@ -226,24 +195,47 @@ public class NotificationService extends Service {
             NotificationChannel serviceChannel = new NotificationChannel(
                     CHANNEL_ID,
                     "Chat Notifications",
-                    NotificationManager.IMPORTANCE_DEFAULT
+                    NotificationManager.IMPORTANCE_HIGH
             );
-            serviceChannel.setDescription("Kênh thông báo cho tin nhắn mới");
-
             NotificationManager manager = getSystemService(NotificationManager.class);
             manager.createNotificationChannel(serviceChannel);
         }
     }
 
+    private Notification createForegroundNotification() {
+        Intent notificationIntent = new Intent(this, NotificationService.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
+
+        return new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Chat App")
+                .setContentText("Đang lắng nghe tin nhắn mới")
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setContentIntent(pendingIntent)
+                .setPriority(NotificationCompat.PRIORITY_MIN)
+                .build();
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d("NotificationService", "Service đã được khởi động");
-        return START_STICKY; // Khởi động lại service nếu bị kill
+        return START_STICKY;
     }
 
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        Intent restartServiceIntent = new Intent(getApplicationContext(), this.getClass());
+        PendingIntent restartServicePendingIntent = PendingIntent.getService(
+                getApplicationContext(), 1, restartServiceIntent, PendingIntent.FLAG_IMMUTABLE);
+
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        alarmManager.set(AlarmManager.ELAPSED_REALTIME,
+                SystemClock.elapsedRealtime() + 1000, restartServicePendingIntent);
+
+        super.onTaskRemoved(rootIntent);
     }
 
     @Override
