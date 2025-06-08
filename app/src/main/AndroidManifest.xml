@@ -50,9 +50,6 @@
             android:name=".screen.chat.AudioCallActivity"
             android:exported="false" />
         <activity
-            android:name=".screen.location.PickLocationActivity"
-            android:exported="false" />
-        <activity
             android:name=".screen.chat.VideoCallActivity"
             android:exported="false" />
         <activity

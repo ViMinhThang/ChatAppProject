@@ -1,21 +1,15 @@
 package com.project.chatapp.model.Chat;
 
-import android.content.Intent;
-import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.project.chatapp.R;
 import com.project.chatapp.data.ChatsRepository;
-import com.project.chatapp.screen.chat.MessageActivity;
-
 import java.util.List;
 
 public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVChats.ViewHolder> {
@@ -61,14 +55,22 @@ public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVCh
         if (lastMsg == null) {
             preview = "";
         } else if (isImageMessage(lastMsg)) {
-            preview = isSentByMe(lastMsg) ? "Bạn đã gửi một ảnh" : "Bạn đã nhận một ảnh";
+            preview = isSentByMe(lastMsg) ? "Bạn đã gửi một ảnh" : "Bạn đã gửi một ảnh";
         } else if (isVideoMessage(lastMsg)) {
-            preview = isSentByMe(lastMsg) ? "Bạn đã gửi một video" : "Bạn đã nhận một video";
+            preview = isSentByMe(lastMsg) ? "Bạn đã gửi một video" : "Bạn đã gửi một video";
         } else if (isLocationMessage(lastMsg)) {
-            preview = isSentByMe(lastMsg) ? "Bạn đã gửi một tọa độ" : "Bạn đã nhận một tọa độ";
-
+            preview = isSentByMe(lastMsg) ? "Bạn đã gửi một tọa độ" : "Bạn đã gửi một tọa độ";
         } else {
-            preview = lastMsg;
+            if (lastMsg.contains(":")) {
+                String[] parts = lastMsg.split(":", 2);
+                if (parts[0].equals(currentUserId)) {
+                    preview = "Bạn: " + parts[1].trim();
+                } else {
+                    preview = parts[1].trim();
+                }
+            } else {
+                preview = lastMsg;
+            }
         }
         holder.lastMessage.setText(preview);
         holder.time.setText(chat.getTime());
@@ -98,8 +100,6 @@ public class CustomAdapterRVChats extends RecyclerView.Adapter<CustomAdapterRVCh
                 }
             });
         });
-
-
     }
 
     @Override
