@@ -1,4 +1,4 @@
-package com.project.chatapp;
+package com.project.chatapp.services;
 
 import android.content.Intent;
 import android.util.Log;

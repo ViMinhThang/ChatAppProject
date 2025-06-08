@@ -1,4 +1,4 @@
-package com.project.chatapp;
+package com.project.chatapp.services;
 
 import android.app.AlarmManager;
 import android.app.Notification;
@@ -22,6 +22,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.project.chatapp.R;
 import com.project.chatapp.data.FirebaseMessengerRepository;
 import com.project.chatapp.screen.chat.MessageActivity;
 

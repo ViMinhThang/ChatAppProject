@@ -1,9 +1,11 @@
-package com.project.chatapp.screen.chat;
+package com.project.chatapp.screen.contact;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.Toast;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -13,11 +15,11 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.project.chatapp.R;
 import com.project.chatapp.data.FirebaseMessengerRepository;
 import com.project.chatapp.databinding.FragmentContactBinding;
-import com.project.chatapp.model.Contact.ContactModel;
-import com.project.chatapp.model.Contact.CustomAdapterRVContact;
-import com.project.chatapp.screen.contact.ContactSearch;
+import com.project.chatapp.model.Contact.contact.ContactModel;
+import com.project.chatapp.model.Contact.contact.CustomAdapterRVContact;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +31,7 @@ public class ContactFragment extends Fragment {
     private CustomAdapterRVContact adapter;
     private ContactSearch search;
 
+    private ImageButton btnPlus;
 
     private final String TAG = "ContactFragment";
 
@@ -48,8 +51,13 @@ public class ContactFragment extends Fragment {
 
         contacts = new ArrayList<>();
         adapter = new CustomAdapterRVContact(contacts);
+        btnPlus = view.findViewById(R.id.btnPlus);
         binding.rwMessenger.setLayoutManager(new LinearLayoutManager(getContext()));
         binding.rwMessenger.setAdapter(adapter);
+        btnPlus.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), AddContactActivity.class);
+            startActivity(intent);
+        });
 
         loadContactsFromFirebase();
         setupSearchListener();  // thêm tìm kiếm
@@ -58,7 +66,7 @@ public class ContactFragment extends Fragment {
     //Lấy ds bạn bè
     private void loadContactsFromFirebase() {
         FirebaseMessengerRepository repo = new FirebaseMessengerRepository();
-        repo.getFriendList(friends -> {
+        repo.getFriendListRealtime(friends -> {
             if (friends != null && !friends.isEmpty()) {
                 contacts.clear();
                 contacts.addAll(friends);
@@ -69,10 +77,12 @@ public class ContactFragment extends Fragment {
             }
         });
     }
+
     private void setupSearchListener() {
         binding.searchEditText.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -83,7 +93,8 @@ public class ContactFragment extends Fragment {
             }
 
             @Override
-            public void afterTextChanged(Editable s) {}
+            public void afterTextChanged(Editable s) {
+            }
         });
     }
 
