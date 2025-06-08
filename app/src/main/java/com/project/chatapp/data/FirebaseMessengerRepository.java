@@ -17,6 +17,7 @@ import com.google.mlkit.nl.smartreply.SmartReplySuggestionResult;
 import com.google.mlkit.nl.smartreply.TextMessage;
 
 import com.project.chatapp.model.ChatMessage;
+import com.project.chatapp.model.Contact.ContactModel;
 import com.project.chatapp.utils.TimeUtils;
 
 import java.util.ArrayList;
@@ -50,6 +51,9 @@ public class FirebaseMessengerRepository {
         void onMessage(String from, String to, String message, String timestamp, String messageId);
     }
 
+    public interface FriendListCallback {
+        void onFriendListReceived(List<ContactModel> friends);
+    }
     public void getCurrentUserId(UserIdCallback callback) {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null) {
@@ -168,6 +172,7 @@ public class FirebaseMessengerRepository {
                 Log.e("SendMessage", "Failed to send message", task.getException());
             }
         });
+
     }
 
     public void generateSmartReplies(String chatId, String userLocalId, SmartReplyCallback callback) {
@@ -211,6 +216,7 @@ public class FirebaseMessengerRepository {
         });
     }
 
+
     public void listenForMessages(String fromId, String toId, MessagesCallback callback) {
         String chatId = fromId.compareTo(toId) < 0 ? fromId + "_" + toId : toId + "_" + fromId;
         DatabaseReference chatRef = mDatabase.child("messages").child(chatId);
@@ -246,6 +252,62 @@ public class FirebaseMessengerRepository {
             public void onCancelled(@NonNull DatabaseError error) {
                 Log.e("FirebaseError", "listenForMessages: " + error.getMessage());
             }
+        });
+    }
+
+    // DS bạn bè hiển thị lên contact
+    public void getFriendList(FriendListCallback callback) {
+        getCurrentUserId(userId -> {
+            if (userId == null) {
+                callback.onFriendListReceived(new ArrayList<>());
+                return;
+            }
+
+            mDatabase.child("users").child(userId).child("chats")
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            List<ContactModel> friends = new ArrayList<>();
+                            for (DataSnapshot chatSnapshot : snapshot.getChildren()) {
+                                String friendId = chatSnapshot.getKey();
+                                if (friendId != null) {
+                                    mDatabase.child("users").child(friendId)
+                                            .addListenerForSingleValueEvent(new ValueEventListener() {
+                                                @Override
+                                                public void onDataChange(@NonNull DataSnapshot friendSnapshot) {
+                                                    String name = friendSnapshot.child("name").getValue(String.class);
+                                                    String status = friendSnapshot.child("status").getValue(String.class);
+                                                    String profilePicture = friendSnapshot.child("profile_picture").getValue(String.class);
+
+                                                    ContactModel friend = new ContactModel(name, status, profilePicture);
+                                                    friends.add(friend);
+
+                                                    // Chỉ callback khi đã load đủ số bạn
+                                                    if (friends.size() == snapshot.getChildrenCount()) {
+                                                        callback.onFriendListReceived(friends);
+                                                    }
+                                                }
+
+                                                @Override
+                                                public void onCancelled(@NonNull DatabaseError error) {
+                                                    Log.e("Firebase", "getFriendList: " + error.getMessage());
+                                                }
+                                            });
+                                }
+                            }
+
+                            // Trường hợp không có bạn nào
+                            if (snapshot.getChildrenCount() == 0) {
+                                callback.onFriendListReceived(friends);
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            Log.e("Firebase", "getFriendList (outer): " + error.getMessage());
+                            callback.onFriendListReceived(new ArrayList<>());
+                        }
+                    });
         });
     }
 }

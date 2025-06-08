@@ -34,8 +34,6 @@ public class ChatsModel {
     }
 
     public String getName() {
-        Log.d("DEBUG", "ChatsModel returning name: " + name);
-
         return name;
     }
 

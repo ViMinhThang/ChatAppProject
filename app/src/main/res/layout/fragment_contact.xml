@@ -8,7 +8,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
-
+    <!-- Header -->
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
@@ -32,7 +32,7 @@
             android:layout_marginRight="10dp"
             android:background="@drawable/plus" />
     </LinearLayout>
-
+    <!-- Thanh tìm kiếm -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -52,9 +52,10 @@
             android:paddingEnd="12dp"
             android:background="@drawable/custom_search" />
     </com.google.android.material.textfield.TextInputLayout>
-
+    <!-- DS liên hệ -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rwMessenger"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
 </LinearLayout>
