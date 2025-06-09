@@ -17,6 +17,8 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.project.chatapp.model.CallModel;
+import com.project.chatapp.screen.authentication.MainActivity;
 import com.project.chatapp.services.NotificationService;
 import com.project.chatapp.R;
 import com.project.chatapp.data.FirebaseMessengerRepository;
@@ -74,6 +76,7 @@ public class ChatsActivity extends AppCompatActivity {
         createNotificationChannel();
         startNotificationService();
         loadChatNames();
+        listenForIncomingCall();
     }
 
     private void createNotificationChannel() {
@@ -176,6 +179,43 @@ public class ChatsActivity extends AppCompatActivity {
                     }
                 });
             }
+        });
+    }
+
+    private void listenForIncomingCall() {
+        FirebaseMessengerRepository repo = new FirebaseMessengerRepository();
+        repo.getCurrentUserId(myUserId -> {
+            Log.d("CALL_DEBUG", "MainActivity lắng nghe userId: " + myUserId);
+            if (myUserId == null) {
+                Log.e("CALL_DEBUG", "userId null trong MainActivity!");
+                return;
+            }
+            DatabaseReference callRef = com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
+                    .child("calls").child(myUserId);
+            callRef.addValueEventListener(new com.google.firebase.database.ValueEventListener() {
+                @Override
+                public void onDataChange(com.google.firebase.database.DataSnapshot snapshot) {
+                    Log.d("CALL_DEBUG", "onDataChange: " + snapshot.exists());
+                    if (snapshot.exists()) {
+                        CallModel call = snapshot.getValue(CallModel.class);
+                        Log.d("CALL_DEBUG", "CallModel: from=" + (call != null ? call.from : "null") + ", to=" + (call != null ? call.to : "null") + ", myUserId=" + myUserId);
+                        if (call != null && "audio".equals(call.type) && !call.from.equals(myUserId)) {
+                            Intent intent = new Intent(ChatsActivity.this, com.project.chatapp.screen.chat.IncomingCallActivity.class);
+                            intent.putExtra("callerName", call.callerName);
+                            intent.putExtra("channelName", call.channelName);
+                            intent.putExtra("fromUserId", call.from);
+                            startActivity(intent);
+                        } else {
+                            Log.d("CALL_DEBUG", "Không mở IncomingCallActivity cho caller (myUserId=" + myUserId + ", from=" + (call != null ? call.from : "null") + ")");
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(com.google.firebase.database.DatabaseError error) {
+                    Log.e("CALL_DEBUG", "onCancelled: " + error.getMessage());
+                }
+            });
         });
     }
 
