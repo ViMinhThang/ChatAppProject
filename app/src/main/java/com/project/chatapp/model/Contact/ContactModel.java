@@ -7,6 +7,9 @@ public class ContactModel implements Serializable {
     private String name;
     private String phone;
     private String status;
+    private String friendStatus;
+    private String userId;
+    private String avatarUrl;
 
     public ContactModel() {
     }
@@ -16,6 +19,9 @@ public class ContactModel implements Serializable {
         this.name = name;
         this.phone = phone;
         this.status = status;
+        this.friendStatus = "";
+        this.userId = "";
+        this.avatarUrl = "";
     }
 
     public String getName() {
@@ -48,5 +54,29 @@ public class ContactModel implements Serializable {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getFriendStatus() {
+        return friendStatus;
+    }
+
+    public void setFriendStatus(String friendStatus) {
+        this.friendStatus = friendStatus;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 }
