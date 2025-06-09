@@ -7,13 +7,11 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.MediaStore;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.text.Editable;
-import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MenuItem;
@@ -26,6 +24,11 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
@@ -105,7 +108,6 @@ public class MessageActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activiy_chat);
-        mDatabase = FirebaseDatabase.getInstance().getReference();
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -157,6 +159,18 @@ public class MessageActivity extends AppCompatActivity {
 
     private void setupEventListeners() {
         btnSend.setOnClickListener(v -> sendMessage());
+
+//// Thêm tên ở placeHolder
+//        TextView chatterName = findViewById(R.id.chatter);
+//        String userName = getIntent().getStringExtra("userName");
+//        Log.d("DEBUG", "Received userName: " + userName);
+//        if (userName != null) {
+//            chatterName.setText(userName);
+//        } else {
+//            Log.d("DEBUG", "userName is null");
+//        }
+
+
         btnBack.setOnClickListener(v -> {
             startActivity(new Intent(this, ChatsActivity.class));
         });
@@ -261,7 +275,7 @@ public class MessageActivity extends AppCompatActivity {
 
     private void setupFirebase() {
         repo = new FirebaseMessengerRepository();
-
+        mDatabase = FirebaseDatabase.getInstance().getReference();
         repo.getCurrentUserId(userId -> {
             Log.d("UserID", "My ID: " + userId);
 
@@ -560,35 +574,14 @@ public class MessageActivity extends AppCompatActivity {
                 });
     }
 
-    private void showPermissionDeniedDialog() {
-        if (!isReturningFromSettings) {
-            new AlertDialog.Builder(this)
-                    .setTitle("Permission Required")
-                    .setMessage("Camera and storage permissions are required to take photos. Please enable them in app settings.")
-                    .setPositiveButton("Open Settings", (dialog, which) -> {
-                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                        Uri uri = Uri.fromParts("package", getPackageName(), null);
-                        intent.setData(uri);
-                        settingsLauncher.launch(intent);
-                    })
-                    .setNegativeButton("Cancel", null)
-                    .show();
-        } else {
-            super.onBackPressed();
-        }
-    }
-
-    private void buildChannelName(ChannelCallback callback) {
-        repo.getCurrentUserId(myUserId -> {
-            if (myUserId == null || myUserId.isEmpty() || toUserId == null || toUserId.isEmpty()) {
+    private void buildChannelName(ChannelNameCallback callback) {
+        // Lấy userId hiện tại từ FirebaseAuth qua repo
+        repo.getCurrentUserId(myId -> {
+            if (myId == null || myId.isEmpty()) {
                 callback.onChannelNameBuilt(null);
                 return;
             }
-
-            String channelName = myUserId.compareTo(toUserId) < 0
-                    ? myUserId + "_" + toUserId
-                    : toUserId + "_" + myUserId;
-
+            String channelName = myId.compareTo(toUserId) < 0 ? myId + "_" + toUserId : toUserId + "_" + myId;
             callback.onChannelNameBuilt(channelName);
         });
     }
@@ -717,5 +710,29 @@ public class MessageActivity extends AppCompatActivity {
             isReturningFromSettings = false;
             // checkAndRequestCameraPermissions();
         }
+    }
+
+    private void showPermissionDeniedDialog() {
+        if (!isReturningFromSettings) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Permission Required")
+                    .setMessage("Camera and storage permissions are required to take photos. Please enable them in app settings.")
+                    .setPositiveButton("Open Settings", (dialog, which) -> {
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        Uri uri = Uri.fromParts("package", getPackageName(), null);
+                        intent.setData(uri);
+                        settingsLauncher.launch(intent);
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        } else {
+            Toast.makeText(this, "Permissions are still required to use the camera", Toast.LENGTH_LONG).show();
+            isReturningFromSettings = false;
+        }
+    }
+
+
+    public interface ChannelNameCallback {
+        void onChannelNameBuilt(String channelName);
     }
 }

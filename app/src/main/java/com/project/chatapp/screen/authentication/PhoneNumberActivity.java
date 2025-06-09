@@ -31,7 +31,6 @@ public class PhoneNumberActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         mAuth = FirebaseAuth.getInstance();
         if (mAuth.getCurrentUser() != null) {
-            // Đã đăng nhập, chuyển thẳng vào ChatsActivity
             Intent intent = new Intent(this, com.project.chatapp.screen.chat.ChatsActivity.class);
             startActivity(intent);
             finish();
@@ -41,20 +40,16 @@ public class PhoneNumberActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
 
-        // Ánh xạ các view
         ImageView icBack = findViewById(R.id.ic_back);
         ccp = findViewById(R.id.ccp);
         etPhoneNumber = findViewById(R.id.et_phone_number);
         btnContinue = findViewById(R.id.btn_continue);
 
-        // Đặt quốc gia mặc định là Indonesia (+62)
-        ccp.setDefaultCountryUsingNameCode("ID");
+        ccp.setDefaultCountryUsingNameCode("VN");
         ccp.resetToDefaultCountry();
 
-        // Xử lý khi nhấn nút quay lại
         icBack.setOnClickListener(view -> finish());
 
-        // Xử lý khi nhấn nút Continue
         btnContinue.setOnClickListener(view -> {
             String phoneNumber = etPhoneNumber.getText().toString().trim();
             if (!phoneNumber.isEmpty()) {

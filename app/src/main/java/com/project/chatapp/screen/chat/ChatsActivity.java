@@ -2,8 +2,6 @@ package com.project.chatapp.screen.chat;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -11,7 +9,6 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.NotificationCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -20,9 +17,10 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.project.chatapp.NotificationService;
+import com.project.chatapp.services.NotificationService;
 import com.project.chatapp.R;
 import com.project.chatapp.data.FirebaseMessengerRepository;
+import com.project.chatapp.screen.contact.ContactFragment;
 
 import java.util.HashMap;
 import java.util.Map;

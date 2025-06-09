@@ -7,6 +7,12 @@ android {
     buildFeatures {
         viewBinding = true
     }
+    buildscript {
+        repositories {
+            google()
+            mavenCentral()
+        }
+    }
 
     namespace 'com.project.chatapp'
     compileSdk 35
@@ -40,7 +46,6 @@ dependencies {
     implementation 'com.google.android.libraries.places:places:3.3.0'
     implementation 'com.google.firebase:firebase-database'
     implementation(platform("com.google.firebase:firebase-bom:32.2.2"))
-    implementation 'com.google.mlkit:smart-reply:17.0.4'
     implementation 'com.google.firebase:firebase-auth'
     implementation("com.google.firebase:firebase-analytics")
     implementation 'com.google.firebase:firebase-firestore'
@@ -51,6 +56,7 @@ dependencies {
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
+    implementation 'com.google.mlkit:smart-reply:17.0.4'
     implementation 'com.hbb20:ccp:2.5.1'
     implementation 'com.cloudinary:cloudinary-android:2.3.1'
     implementation 'com.squareup.okhttp3:okhttp:4.9.1'
@@ -59,5 +65,7 @@ dependencies {
     implementation 'com.github.chrisbanes:PhotoView:2.3.0'
     implementation 'com.google.android.exoplayer:exoplayer:2.19.1'
     implementation 'com.google.android.material:material:1.9.0'
-
+    implementation 'com.google.code.gson:gson:2.8.9'
+    implementation 'com.github.bumptech.glide:glide:4.15.1'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.15.1'
 }

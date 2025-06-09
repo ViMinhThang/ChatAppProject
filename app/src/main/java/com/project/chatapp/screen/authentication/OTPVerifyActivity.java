@@ -40,7 +40,6 @@ public class OTPVerifyActivity extends AppCompatActivity {
         otp4 = findViewById(R.id.otp4);
         otp5 = findViewById(R.id.otp5);
         otp6 = findViewById(R.id.otp6);
-        String code = createCode();
         phoneNumber = getIntent().getStringExtra("phoneNumber");
         phoneNumber = "+84" + phoneNumber.substring(1);
         isNewUser = getIntent().getBooleanExtra("isNewUser", false);
@@ -61,6 +60,11 @@ public class OTPVerifyActivity extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
                 if (!s.toString().trim().isEmpty()) {
                     String code = createCode();
                     if (code.length() == 6) {
@@ -71,11 +75,6 @@ public class OTPVerifyActivity extends AppCompatActivity {
                         }
                     }
                 }
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-
             }
         });
 

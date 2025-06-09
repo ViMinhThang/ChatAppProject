@@ -11,12 +11,12 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.*;
 import com.google.mlkit.nl.smartreply.SmartReply;
-import com.google.mlkit.nl.smartreply.SmartReplyGenerator;
 import com.google.mlkit.nl.smartreply.SmartReplySuggestion;
-import com.google.mlkit.nl.smartreply.SmartReplySuggestionResult;
 import com.google.mlkit.nl.smartreply.TextMessage;
 
 import com.project.chatapp.model.ChatMessage;
+import com.project.chatapp.model.Contact.addContact.addContactModel;
+import com.project.chatapp.model.Contact.contact.ContactModel;
 import com.project.chatapp.utils.TimeUtils;
 
 import java.util.ArrayList;
@@ -34,6 +34,10 @@ public class FirebaseMessengerRepository {
         mAuth = FirebaseAuth.getInstance();
     }
 
+    public interface UsersCallback {
+        void onUsersReceived(List<addContactModel> users);
+    }
+
     public interface SmartReplyCallback {
         void onSuggestions(List<String> suggestions);
     }
@@ -48,6 +52,10 @@ public class FirebaseMessengerRepository {
 
     public interface MessagesCallback {
         void onMessage(String from, String to, String message, String timestamp, String messageId);
+    }
+
+    public interface FriendListCallback {
+        void onFriendListReceived(List<ContactModel> friends);
     }
 
     public void getCurrentUserId(UserIdCallback callback) {
@@ -168,6 +176,7 @@ public class FirebaseMessengerRepository {
                 Log.e("SendMessage", "Failed to send message", task.getException());
             }
         });
+
     }
 
     public void generateSmartReplies(String chatId, String userLocalId, SmartReplyCallback callback) {
@@ -211,6 +220,7 @@ public class FirebaseMessengerRepository {
         });
     }
 
+
     public void listenForMessages(String fromId, String toId, MessagesCallback callback) {
         String chatId = fromId.compareTo(toId) < 0 ? fromId + "_" + toId : toId + "_" + fromId;
         DatabaseReference chatRef = mDatabase.child("messages").child(chatId);
@@ -248,4 +258,161 @@ public class FirebaseMessengerRepository {
             }
         });
     }
+
+    // DS bạn bè hiển thị lên contact
+    public void getFriendListRealtime(FriendListCallback callback) {
+        getCurrentUserId(userId -> {
+            if (userId == null) {
+                callback.onFriendListReceived(new ArrayList<>());
+                return;
+            }
+
+            mDatabase.child("users").child(userId).child("friends")
+                    .addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            List<ContactModel> friends = new ArrayList<>();
+                            long totalFriends = snapshot.getChildrenCount();
+
+                            if (totalFriends == 0) {
+                                callback.onFriendListReceived(friends);
+                                return;
+                            }
+
+                            final long[] loadedCount = {0};
+
+                            for (DataSnapshot friendIdSnapshot : snapshot.getChildren()) {
+                                String friendId = friendIdSnapshot.getKey();
+                                if (friendId != null) {
+                                    mDatabase.child("users").child(friendId)
+                                            .addListenerForSingleValueEvent(new ValueEventListener() {
+                                                @Override
+                                                public void onDataChange(@NonNull DataSnapshot friendSnapshot) {
+                                                    String name = friendSnapshot.child("name").getValue(String.class);
+                                                    String status = friendSnapshot.child("status").getValue(String.class);
+                                                    String profilePicture = friendSnapshot.child("profile_picture").getValue(String.class);
+                                                    String phone = friendSnapshot.child("phone").getValue(String.class);
+
+                                                    if (name != null && phone != null && status != null && profilePicture != null) {
+                                                        ContactModel friend = new ContactModel(name, phone, status, profilePicture);
+                                                        friends.add(friend);
+                                                    }
+
+                                                    loadedCount[0]++;
+                                                    if (loadedCount[0] == totalFriends) {
+                                                        callback.onFriendListReceived(friends);
+                                                    }
+                                                }
+
+                                                @Override
+                                                public void onCancelled(@NonNull DatabaseError error) {
+                                                    Log.e("Firebase", "getFriendList (inner): " + error.getMessage());
+                                                    loadedCount[0]++;
+                                                    if (loadedCount[0] == totalFriends) {
+                                                        callback.onFriendListReceived(friends);
+                                                    }
+                                                }
+                                            });
+                                } else {
+                                    loadedCount[0]++;
+                                    if (loadedCount[0] == totalFriends) {
+                                        callback.onFriendListReceived(friends);
+                                    }
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            Log.e("Firebase", "getFriendList (outer): " + error.getMessage());
+                            callback.onFriendListReceived(new ArrayList<>());
+                        }
+                    });
+        });
+    }
+
+
+    public void getAllUsersExceptCurrent(UsersCallback callback) {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser == null) {
+            callback.onUsersReceived(new ArrayList<>());
+            return;
+        }
+
+        String currentUserId = currentUser.getUid();
+
+        mDatabase.child("users").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<addContactModel> users = new ArrayList<>();
+                for (DataSnapshot userSnapshot : snapshot.getChildren()) {
+                    String userId = userSnapshot.getKey();
+                    if (!userId.equals(currentUserId)) {
+                        String name = userSnapshot.child("name").getValue(String.class);
+                        String phone = userSnapshot.child("phone").getValue(String.class);
+                        String status = userSnapshot.child("status").getValue(String.class);
+                        String profilePicture = userSnapshot.child("profile_picture").getValue(String.class);
+
+                        addContactModel user = new addContactModel(name, phone, status, profilePicture);
+                        users.add(user);
+                    }
+                }
+                callback.onUsersReceived(users);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                callback.onUsersReceived(new ArrayList<>());
+            }
+        });
+    }
+
+    public void addFriendByPhoneNumber(String phoneNumber) {
+        getCurrentUserId(currentUserId -> {
+            if (currentUserId == null) {
+                Log.e("AddFriend", "Current user ID is null");
+                return;
+            }
+
+            Query query = mDatabase.child("users").orderByChild("phone").equalTo(phoneNumber);
+            query.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (!snapshot.exists()) {
+                        Log.e("AddFriend", "No user found with phone: " + phoneNumber);
+                        return;
+                    }
+
+                    for (DataSnapshot userSnapshot : snapshot.getChildren()) {
+                        String friendId = userSnapshot.getKey();
+
+                        if (friendId != null && !friendId.equals(currentUserId)) {
+                            String name = userSnapshot.child("name").getValue(String.class);
+
+                            Map<String, Object> friendData = new HashMap<>();
+                            friendData.put("userID", friendId);
+                            friendData.put("name", name);
+                            friendData.put("phone", phoneNumber);
+                            friendData.put("status", "Online");
+                            mDatabase.child("users").child(currentUserId)
+                                    .child("friends").child(friendId).setValue(friendData)
+                                    .addOnSuccessListener(aVoid -> Log.d("AddFriend", "Friend added: " + friendId))
+                                    .addOnFailureListener(e -> Log.e("AddFriend", "Failed to add friend: " + e.getMessage()));
+                        } else {
+                            Log.e("AddFriend", "Cannot add yourself or invalid user");
+                        }
+
+                        break;
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    Log.e("AddFriend", "Query cancelled: " + error.getMessage());
+                }
+            });
+        });
+    }
+
+
 }
