@@ -192,7 +192,9 @@ public class FirebaseMessengerRepository {
                     if (chatMsg != null && !chatMsg.getContent().contains("http")) {
                         String fromId = chatMsg.getFromId();
                         String content = chatMsg.getContent();
-                        long timestamp = Long.parseLong(chatMsg.getTimeStamp());
+                        //long timestamp = Long.parseLong(chatMsg.getTimeStamp());
+                        String timestampRaw = chatMsg.getTimeStamp();
+                        long timestamp = (timestampRaw != null && !timestampRaw.isEmpty()) ? Long.parseLong(timestampRaw) : System.currentTimeMillis();
 
                         if (fromId.equals(userLocalId)) {
                             conversation.add(TextMessage.createForLocalUser(content, timestamp));
@@ -200,6 +202,12 @@ public class FirebaseMessengerRepository {
                             conversation.add(TextMessage.createForRemoteUser(content, timestamp, fromId));
                         }
                     }
+                }
+                // Kiểm tra danh sách trước khi gọi SmartReply API
+                if (conversation.isEmpty()) {
+                    Log.e("SmartReply", "Không có tin nhắn hợp lệ để xử lý.");
+                    callback.onSuggestions(new ArrayList<>());
+                    return;
                 }
 
                 SmartReply.getClient().suggestReplies(conversation)
@@ -222,9 +230,12 @@ public class FirebaseMessengerRepository {
 
 
     public void listenForMessages(String fromId, String toId, MessagesCallback callback) {
+        if (fromId == null || toId == null) {
+            Log.e("ChatDebug", "listenForMessages: fromId hoặc toId bị null. fromId=" + fromId + ", toId=" + toId);
+            return;
+        }
         String chatId = fromId.compareTo(toId) < 0 ? fromId + "_" + toId : toId + "_" + fromId;
         DatabaseReference chatRef = mDatabase.child("messages").child(chatId);
-
         chatRef.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
@@ -288,13 +299,14 @@ public class FirebaseMessengerRepository {
                                             .addListenerForSingleValueEvent(new ValueEventListener() {
                                                 @Override
                                                 public void onDataChange(@NonNull DataSnapshot friendSnapshot) {
+                                                    String userId = friendIdSnapshot.getKey(); // key chính là id
                                                     String name = friendSnapshot.child("name").getValue(String.class);
                                                     String status = friendSnapshot.child("status").getValue(String.class);
                                                     String profilePicture = friendSnapshot.child("profile_picture").getValue(String.class);
                                                     String phone = friendSnapshot.child("phone").getValue(String.class);
 
                                                     if (name != null && phone != null && status != null && profilePicture != null) {
-                                                        ContactModel friend = new ContactModel(name, phone, status, profilePicture);
+                                                        ContactModel friend = new ContactModel(userId, name, phone, status, profilePicture);
                                                         friends.add(friend);
                                                     }
 

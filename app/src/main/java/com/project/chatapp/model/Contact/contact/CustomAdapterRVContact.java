@@ -19,8 +19,15 @@ import java.util.List;
 public class CustomAdapterRVContact extends RecyclerView.Adapter<CustomAdapterRVContact.ViewHolder> {
     private List<ContactModel> listContact;
 
-    public CustomAdapterRVContact(List<ContactModel> listContact) {
+    private OnContactClickListener listener;
+
+    public CustomAdapterRVContact(List<ContactModel> listContact,  OnContactClickListener listener) {
         this.listContact = listContact;
+        this.listener= listener;
+    }
+    //interface lắng nghe gọi chat
+    public interface OnContactClickListener {
+        void onContactClick(ContactModel contact);
     }
 
     @NonNull
@@ -55,6 +62,12 @@ public class CustomAdapterRVContact extends RecyclerView.Adapter<CustomAdapterRV
         } else {
             holder.imgAvatar.setImageResource(R.drawable.ic_avatar_placeholder);
         }
+        // Xử lý click
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onContactClick(contact);
+            }
+        });
     }
 
 

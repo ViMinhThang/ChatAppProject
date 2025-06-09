@@ -20,6 +20,8 @@ import com.project.chatapp.data.FirebaseMessengerRepository;
 import com.project.chatapp.databinding.FragmentContactBinding;
 import com.project.chatapp.model.Contact.contact.ContactModel;
 import com.project.chatapp.model.Contact.contact.CustomAdapterRVContact;
+import com.project.chatapp.screen.chat.ChatsActivity;
+import com.project.chatapp.screen.chat.MessageActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +52,12 @@ public class ContactFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         contacts = new ArrayList<>();
-        adapter = new CustomAdapterRVContact(contacts);
+        adapter = new CustomAdapterRVContact(contacts, contact -> {
+            // Khi click vào bạn bè, mở ChatActivity và truyền dữ liệu
+            Intent intent = new Intent(getActivity(), MessageActivity.class);
+            intent.putExtra("contact", contact);
+            startActivity(intent);
+        });
         btnPlus = view.findViewById(R.id.btnPlus);
         binding.rwMessenger.setLayoutManager(new LinearLayoutManager(getContext()));
         binding.rwMessenger.setAdapter(adapter);

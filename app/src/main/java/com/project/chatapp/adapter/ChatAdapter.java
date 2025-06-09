@@ -6,7 +6,6 @@ import android.net.Uri;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.BackgroundColorSpan;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,15 +27,12 @@ import com.project.chatapp.R;
 import com.project.chatapp.model.ChatMessage;
 import com.project.chatapp.screen.chat.ImageViewerActivity;
 
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int VIEW_TYPE_TEXT = 1;
     private static final int VIEW_TYPE_IMAGE = 2;
     private static final int VIEW_TYPE_VIDEO = 3;
@@ -51,7 +47,7 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         void onMessageClick(int position);
     }
 
-    public ChatApdater(List<ChatMessage> messageList, OnMessageClickListener clickListener) {
+    public ChatAdapter(List<ChatMessage> messageList, OnMessageClickListener clickListener) {
         this.messageList = messageList;
         this.clickListener = clickListener;
     }
@@ -233,7 +229,10 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     private void setMessageAlignment(LinearLayout container, TextView msg, boolean isSender) {
-        container.setGravity(isSender ? Gravity.END : Gravity.START);
+        //container.setGravity(isSender ? Gravity.END : Gravity.START);
+        if (container != null) {
+            container.setGravity(isSender ? Gravity.END : Gravity.START);
+        }
         if (msg != null) {
             msg.setBackgroundResource(isSender ? R.drawable.bubble_right : R.drawable.buble_left);
             msg.setTextColor(isSender ? Color.WHITE : Color.BLACK);

@@ -4,12 +4,14 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 public class ContactModel implements Parcelable {
+    private String id;
     private String name;
     private String status;
     private String phone;
     private String profile_picture; // chỉnh thành avatar user
 
-    public ContactModel(String name, String phone, String status, String profile_picture) {
+    public ContactModel(String id, String name, String phone, String status, String profile_picture) {
+        this.id = id;
         this.name = name;
         this.phone = phone;
         this.status = status;
@@ -18,6 +20,7 @@ public class ContactModel implements Parcelable {
 
     // Constructor dùng để tạo từ Parcel
     protected ContactModel(Parcel in) {
+        id= in.readString();
         name = in.readString();
         status = in.readString();
         phone = in.readString();
@@ -48,6 +51,10 @@ public class ContactModel implements Parcelable {
         return phone;
     }
 
+    public String getId() {
+        return id;
+    }
+
     public String getProfile_picture() {
         return profile_picture;
     }
@@ -59,6 +66,7 @@ public class ContactModel implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(id);
         dest.writeString(name);
         dest.writeString(status);
         dest.writeString(phone);

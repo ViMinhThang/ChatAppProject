@@ -3,6 +3,7 @@ package com.project.chatapp.model;
 import com.google.firebase.database.PropertyName;
 
 public class ChatMessage {
+
     public enum MessageType {
         TEXT,
         IMAGE,

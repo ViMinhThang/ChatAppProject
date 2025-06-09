@@ -46,13 +46,19 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.ValueEventListener;
 import com.project.chatapp.R;
-import com.project.chatapp.adapter.ChatApdater;
+import com.project.chatapp.adapter.ChatAdapter;
 import com.project.chatapp.data.ChatsRepository;
 import com.project.chatapp.data.FirebaseMessengerRepository;
+import com.project.chatapp.model.Chat.CustomAdapterRVChats;
 import com.project.chatapp.model.ChatMessage;
 import com.project.chatapp.model.CallModel;
+import com.project.chatapp.model.Contact.contact.ContactModel;
 import com.project.chatapp.screen.location.PickLocationActivity;
 import com.project.chatapp.utils.ChatUitls;
 import com.project.chatapp.utils.CloudinaryHelper;
@@ -84,7 +90,7 @@ public class MessageActivity extends AppCompatActivity {
     // Data and Adapter
     private final List<ChatMessage> messageList = new ArrayList<>();
 
-    private ChatApdater chatApdater;
+    private ChatAdapter chatAdapter;
     private FirebaseMessengerRepository repo;
     private String toUserId;
     private DatabaseReference mDatabase;
@@ -103,6 +109,9 @@ public class MessageActivity extends AppCompatActivity {
     private static final int STORAGE_PERMISSION_CODE = 103;
     private Uri pendingMediaUri;
 
+    //Contact
+    private ContactModel contact;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -115,11 +124,27 @@ public class MessageActivity extends AppCompatActivity {
         });
         toUserId = getIntent().getStringExtra("userId");
         repo = new FirebaseMessengerRepository();
+
+        // Nhận dữ liệu từ Intent
+        contact = getIntent().getParcelableExtra("contact");
+
+        if (contact != null) {
+            toUserId = contact.getId(); // ID của người nhận để load tin nhắn
+            TextView chatter = findViewById(R.id.chatter);
+            chatter.setText(contact.getName());
+        }else if (toUserId != null) {
+            // Lấy tên từ repo nếu chỉ có ID
+            repo.getUserNameById(toUserId, name -> {
+                ((TextView) findViewById(R.id.chatter)).setText(name != null ? name : "Người dùng");
+            });
+        }
+
         initViews();
         setupRecyclerView();
         setupFirebase();
         setupEventListeners();
         setupPermissionLaunchers();
+        loadMessages();
         repo.getCurrentUserId(myUserId -> {
             if (myUserId != null) {
                 mDatabase.child("users").child(myUserId).child("chats").child(toUserId)
@@ -128,6 +153,8 @@ public class MessageActivity extends AppCompatActivity {
             }
         });
     }
+
+
 
     private void initViews() {
         recyclerView = findViewById(R.id.recyclerView);
@@ -152,24 +179,13 @@ public class MessageActivity extends AppCompatActivity {
     }
 
     private void setupRecyclerView() {
-        chatApdater = new ChatApdater(messageList, this::onMessageClick);
+        chatAdapter = new ChatAdapter(messageList, this::onMessageClick);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setAdapter(chatApdater);
+        recyclerView.setAdapter(chatAdapter);
     }
 
     private void setupEventListeners() {
         btnSend.setOnClickListener(v -> sendMessage());
-
-//// Thêm tên ở placeHolder
-//        TextView chatterName = findViewById(R.id.chatter);
-//        String userName = getIntent().getStringExtra("userName");
-//        Log.d("DEBUG", "Received userName: " + userName);
-//        if (userName != null) {
-//            chatterName.setText(userName);
-//        } else {
-//            Log.d("DEBUG", "userName is null");
-//        }
-
 
         btnBack.setOnClickListener(v -> {
             startActivity(new Intent(this, ChatsActivity.class));
@@ -279,6 +295,11 @@ public class MessageActivity extends AppCompatActivity {
         repo.getCurrentUserId(userId -> {
             Log.d("UserID", "My ID: " + userId);
 
+            if (userId == null || toUserId == null) {
+                Log.e("ChatDebug", "Lỗi: userId hoặc toUserId bị null!");
+                return;
+            }
+
             repo.listenForMessages(userId, toUserId, (String from, String to, String message, String timestamp, String messageId) -> {
                 boolean isSentByMe = from.equals(userId);
                 ChatMessage chatMessage = new ChatMessage(from, to, message, timestamp);
@@ -288,7 +309,7 @@ public class MessageActivity extends AppCompatActivity {
                 if (isSearchMode && !currentSearchQuery.isEmpty()) {
                     performSearch(currentSearchQuery);
                 } else {
-                    chatApdater.notifyItemInserted(messageList.size() - 1);
+                    chatAdapter.notifyItemInserted(messageList.size() - 1);
                     recyclerView.scrollToPosition(messageList.size() - 1);
                 }
             });
@@ -374,7 +395,7 @@ public class MessageActivity extends AppCompatActivity {
             searchNavigationView.setVisibility(View.GONE);
             searchResults.clear();
             searchPositions.clear();
-            chatApdater.updateMessages(messageList, "", -1);
+            chatAdapter.updateMessages(messageList, "", -1);
             return;
         }
 
@@ -392,7 +413,7 @@ public class MessageActivity extends AppCompatActivity {
 
         updateSearchUI();
 
-        chatApdater.updateMessages(messageList, currentSearchQuery,
+        chatAdapter.updateMessages(messageList, currentSearchQuery,
                 searchPositions.isEmpty() ? -1 : searchPositions.get(0));
 
         if (!searchPositions.isEmpty()) {
@@ -434,7 +455,7 @@ public class MessageActivity extends AppCompatActivity {
                 if (searchPositions.get(i) == position) {
                     currentSearchIndex = i;
                     updateSearchUI();
-                    chatApdater.updateMessages(messageList, currentSearchQuery, position);
+                    chatAdapter.updateMessages(messageList, currentSearchQuery, position);
                     break;
                 }
             }
@@ -451,7 +472,7 @@ public class MessageActivity extends AppCompatActivity {
             updateSearchUI();
 
             int messagePosition = searchPositions.get(currentSearchIndex);
-            chatApdater.updateMessages(messageList, currentSearchQuery, messagePosition);
+            chatAdapter.updateMessages(messageList, currentSearchQuery, messagePosition);
             scrollToSearchResult(messagePosition);
         }
     }
@@ -518,7 +539,7 @@ public class MessageActivity extends AppCompatActivity {
         searchResults.clear();
         searchPositions.clear();
 
-        chatApdater.updateMessages(messageList, "", -1);
+        chatAdapter.updateMessages(messageList, "", -1);
 
         android.view.inputmethod.InputMethodManager imm =
                 (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
@@ -734,5 +755,46 @@ public class MessageActivity extends AppCompatActivity {
 
     public interface ChannelNameCallback {
         void onChannelNameBuilt(String channelName);
+    }
+
+    //Load tin nhắn với bạn trong contact
+    private void loadMessages() {
+        if (contact != null) {
+            String toUserId = contact.getId();
+            Log.d("ChatDebug", "To User ID: " + toUserId);
+            repo.getCurrentUserId(myUserId -> {
+                if (myUserId != null) {
+                    String chatId = myUserId.compareTo(toUserId) < 0 ? myUserId + "_" + toUserId : toUserId + "_" + myUserId;
+                    DatabaseReference chatRef = mDatabase.child("messages").child(chatId);
+                    Log.d("ChatDebug", "Chat ID được tạo: " + chatId);
+                    chatRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                                public void onDataChange(DataSnapshot snapshot) {
+                                    messageList.clear(); // Xóa danh sách cũ
+
+                                    if (snapshot.exists()) {
+                                        for (DataSnapshot child : snapshot.getChildren()) {
+                                            ChatMessage message = child.getValue(ChatMessage.class);
+                                            if (message != null) {
+                                                messageList.add(message);
+                                            }
+                                        }
+                                    } else {
+                                        // Nếu chưa có tin nhắn, hiển thị tin nhắn mở màn với timestamp hợp lệ
+                                        String timeStamp = String.valueOf(System.currentTimeMillis());
+                                        messageList.add(new ChatMessage(myUserId, toUserId, "Xin chào! Hãy bắt đầu cuộc trò chuyện nào!", timeStamp));
+                                    }
+                                    chatAdapter.notifyDataSetChanged(); // Cập nhật danh sách trên giao diện
+                                }
+                                @Override
+                                public void onCancelled(DatabaseError error) {
+                                    Log.e("MessageActivity", "Lỗi khi tải tin nhắn", error.toException());
+                                }
+                            });
+                } else {
+                    Log.e("ChatDebug", "User ID không lấy được!");
+                }
+            });
+        }
     }
 }

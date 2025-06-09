@@ -15,7 +15,7 @@
         android:background="@drawable/btn_blue_background"
         android:padding="8dp"
         android:clickable="true"
-        android:focusable="true" />
+        android:focusable="true"/>
 
     <TextView
         android:id="@+id/tvTime"

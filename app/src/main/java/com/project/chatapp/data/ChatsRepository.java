@@ -96,8 +96,13 @@ public class ChatsRepository {
                         String chatId = chatSnapshot.getKey();
                         if (chatId == null || chatId.startsWith("group")) continue;
 
-                        String lastMessage = chatSnapshot.child("last_content").getValue(String.class).toString();
+                       // String lastMessage = chatSnapshot.child("last_content").getValue(String.class).toString();
+                        String lastMessageRaw = chatSnapshot.child("last_content").getValue(String.class);
+                        String lastMessage = (lastMessageRaw != null) ? lastMessageRaw : "Chưa có tin nhắn";
+
                         String lastMessageTime = chatSnapshot.child("last_content_time").getValue(String.class);
+                        final String lastMessageTimeFinal = (lastMessageTime != null) ? lastMessageTime : String.valueOf(System.currentTimeMillis());
+
                         Long value = chatSnapshot.child("unread").getValue(Long.class);
                         long unreadCount = (value != null) ? value.longValue() : 0L;
 
@@ -107,7 +112,7 @@ public class ChatsRepository {
                                 String name = otherUserSnapshot.child("name").getValue(String.class);
                                 String status = otherUserSnapshot.child("status").getValue(String.class);
                                 String phone = otherUserSnapshot.child("phone").getValue(String.class);
-                                String timeAgo = TimeUtils.getTimeAgo(lastMessageTime);
+                                String timeAgo = TimeUtils.getTimeAgo(lastMessageTimeFinal);
 
                                 chats.add(new ChatsModel(R.drawable.pic1, status, name, lastMessage, timeAgo, unreadCount, phone, chatId));
                                 chatsCallback.onChatsLoaded(new ArrayList<>(chats));
@@ -132,6 +137,11 @@ public class ChatsRepository {
     }
 
     public void getUserNameById(String userId, UserNameCallback callback) {
+        if (userId == null) {
+            Log.e("getUserNameById", "userId is null");
+            callback.onUserNameLoaded(null);
+            return;
+        }
         mDatabase.child("users").child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {

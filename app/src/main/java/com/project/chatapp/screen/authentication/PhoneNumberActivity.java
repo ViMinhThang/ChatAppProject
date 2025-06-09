@@ -18,7 +18,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.hbb20.CountryCodePicker;
 import com.project.chatapp.R;
 
-public class PhoneNumberActivity extends AppCompatActivity {
+public class
+PhoneNumberActivity extends AppCompatActivity {
 
     private CountryCodePicker ccp;
     private EditText etPhoneNumber;
