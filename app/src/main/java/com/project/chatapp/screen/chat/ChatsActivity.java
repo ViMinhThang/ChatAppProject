@@ -74,6 +74,7 @@ public class ChatsActivity extends AppCompatActivity {
         createNotificationChannel();
         startNotificationService();
         loadChatNames();
+        listenForIncomingCall();
     }
 
     private void createNotificationChannel() {
@@ -147,6 +148,32 @@ public class ChatsActivity extends AppCompatActivity {
                 public void onCancelled(@NonNull DatabaseError error) {
                     Log.e("ChatsActivity", "Failed to load chats: " + error.getMessage());
                 }
+            });
+        });
+    }
+
+    private void listenForIncomingCall() {
+        FirebaseMessengerRepository repo = new FirebaseMessengerRepository();
+        repo.getCurrentUserId(myUserId -> {
+            if (myUserId == null) return;
+            DatabaseReference callRef = FirebaseDatabase.getInstance().getReference()
+                    .child("calls").child(myUserId);
+            callRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    if (snapshot.exists()) {
+                        com.project.chatapp.model.CallModel call = snapshot.getValue(com.project.chatapp.model.CallModel.class);
+                        if (call != null && "audio".equals(call.type) && !call.from.equals(myUserId)) {
+                            Intent intent = new Intent(ChatsActivity.this, IncomingCallActivity.class);
+                            intent.putExtra("callerName", call.callerName);
+                            intent.putExtra("channelName", call.channelName);
+                            intent.putExtra("fromUserId", call.from);
+                            startActivity(intent);
+                        }
+                    }
+                }
+                @Override
+                public void onCancelled(DatabaseError error) {}
             });
         });
     }

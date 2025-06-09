@@ -195,8 +195,8 @@ public class MessageActivity extends AppCompatActivity {
                         .child("calls_status").child(myUserId).child("end").setValue(false);
                 String channelName = myUserId.compareTo(toUserId) < 0 ? myUserId + "_" + toUserId : toUserId + "_" + myUserId;
                 ChatsRepository chatsRepository = new ChatsRepository();
-                chatsRepository.getUserNameById(toUserId, name -> {
-                    chatsRepository.getUserNameById(myUserId, myName -> {
+                chatsRepository.getUserNameById(myUserId, myName -> {
+                    chatsRepository.getUserNameById(toUserId, name -> {
                         long timestamp = System.currentTimeMillis();
                         CallModel call = new CallModel(myUserId, toUserId, "audio", channelName, myName, timestamp);
                         com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
