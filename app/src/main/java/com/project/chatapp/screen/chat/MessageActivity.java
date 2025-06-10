@@ -63,8 +63,6 @@ import java.util.Locale;
 public class MessageActivity extends AppCompatActivity {
     private static final int PICK_IMAGE_VIDEO_REQUEST = 102;
     private static final int RECORD_PERMISSION_CODE = 1001;
-
-    // Voice Message Components
     private ImageView btnVoice;
     private LinearLayout inputContainer, recordingStateView;
     private TextView tvRecordingTimer, btnCancelRecording, btnSendRecording;
@@ -72,7 +70,6 @@ public class MessageActivity extends AppCompatActivity {
     private VoiceMessageManager voiceMessageManager;
     private CountDownTimer recordingTimer;
     private final long recordingMinimumDuration = 1000L;
-
     // UI Components
     private RecyclerView recyclerView;
     private EditText etMessage, etSearchInput;
@@ -122,7 +119,6 @@ public class MessageActivity extends AppCompatActivity {
         setupEventListeners();
         setupPermissionLaunchers();
         setupVoiceMessage();
-
         repo.getCurrentUserId(myUserId -> {
             if (myUserId != null) {
                 mDatabase.child("users").child(myUserId).child("chats").child(toUserId)
@@ -169,6 +165,24 @@ public class MessageActivity extends AppCompatActivity {
     }
 
     private void setupEventListeners() {
+        etMessage.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s != null && s.length() > 0) {
+                    btnSend.setVisibility(View.VISIBLE);
+                    btnVoice.setVisibility(View.GONE);
+                } else {
+                    btnSend.setVisibility(View.GONE);
+                    btnVoice.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
         btnSend.setOnClickListener(v -> sendMessage());
 
 //// Thêm tên ở placeHolder
@@ -316,24 +330,6 @@ public class MessageActivity extends AppCompatActivity {
             });
         });
     }
-    private void setupVoiceMessage() {
-        voiceMessageManager = new VoiceMessageManager(this);
-
-        voiceMessageManager.setOnRecordingStateChangeListener(isRecording -> {
-            runOnUiThread(() -> updateRecordingUI(isRecording));
-        });
-
-        btnVoice.setOnClickListener(v -> {
-            if (checkRecordPermission()) {
-                startRecording();
-            } else {
-                requestRecordPermission();
-            }
-        });
-
-        btnCancelRecording.setOnClickListener(v -> cancelRecording());
-        btnSendRecording.setOnClickListener(v -> stopRecording());
-    }
 
     private void sendCordinate(String corr) {
 
@@ -387,6 +383,7 @@ public class MessageActivity extends AppCompatActivity {
             }
         });
     }
+
 
     private void sendMediaMessage(String mediaUrl) {
         Log.d("MessageActivity", "Sending media message: " + mediaUrl);
@@ -730,13 +727,11 @@ public class MessageActivity extends AppCompatActivity {
             voiceMessageManager.release();
         }
         stopRecordingTimer();
-        // Giữ nguyên code cũ
         if (pendingMediaUri != null) {
             revokeUriPermission(pendingMediaUri,
                     Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
         }
     }
-
 
     @Override
     protected void onResume() {
@@ -770,6 +765,25 @@ public class MessageActivity extends AppCompatActivity {
     public interface ChannelNameCallback {
         void onChannelNameBuilt(String channelName);
     }
+    // Thêm các phương thức này vào cuối class, trước dấu } cuối cùng
+    private void setupVoiceMessage() {
+        voiceMessageManager = new VoiceMessageManager(this);
+
+        voiceMessageManager.setOnRecordingStateChangeListener(isRecording -> {
+            runOnUiThread(() -> updateRecordingUI(isRecording));
+        });
+
+        btnVoice.setOnClickListener(v -> {
+            if (checkRecordPermission()) {
+                startRecording();
+            } else {
+                requestRecordPermission();
+            }
+        });
+
+        btnCancelRecording.setOnClickListener(v -> cancelRecording());
+        btnSendRecording.setOnClickListener(v -> stopRecording());
+    }
 
     private boolean checkRecordPermission() {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) ==
@@ -801,8 +815,10 @@ public class MessageActivity extends AppCompatActivity {
         File recordingFile = voiceMessageManager.stopRecording();
         hideRecordingUI();
 
-        if (recordingFile != null) {
+        if (recordingFile != null && recordingFile.exists() && recordingFile.length() > 0) {
             uploadVoiceMessage(recordingFile);
+        } else {
+            Toast.makeText(this, "Lỗi: File ghi âm không hợp lệ", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -841,7 +857,8 @@ public class MessageActivity extends AppCompatActivity {
 
             @Override
             public void onFinish() {}
-        }.start();
+        };
+        recordingTimer.start();
     }
 
     private void stopRecordingTimer() {
@@ -860,6 +877,11 @@ public class MessageActivity extends AppCompatActivity {
     }
 
     private void uploadVoiceMessage(File file) {
+        if (!file.exists()) {
+            Toast.makeText(this, "File ghi âm không tồn tại", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         progressDialog.setMessage("Đang tải lên tin nhắn thoại...");
         progressDialog.show();
 
@@ -868,7 +890,11 @@ public class MessageActivity extends AppCompatActivity {
             public void onSuccess(String url) {
                 runOnUiThread(() -> {
                     progressDialog.dismiss();
-                    sendVoiceMessage(url);
+                    if (url != null && !url.isEmpty()) {
+                        sendVoiceMessage(url);
+                    } else {
+                        Toast.makeText(MessageActivity.this, "Lỗi: URL trống", Toast.LENGTH_SHORT).show();
+                    }
                 });
             }
 
@@ -876,7 +902,8 @@ public class MessageActivity extends AppCompatActivity {
             public void onError(String error) {
                 runOnUiThread(() -> {
                     progressDialog.dismiss();
-                    Toast.makeText(MessageActivity.this, "Lỗi khi tải lên tin nhắn thoại", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MessageActivity.this,
+                            "Lỗi khi tải lên tin nhắn thoại: " + error, Toast.LENGTH_SHORT).show();
                 });
             }
         });
@@ -884,22 +911,33 @@ public class MessageActivity extends AppCompatActivity {
 
     private void sendVoiceMessage(String url) {
         repo.getCurrentUserId(fromUserId -> {
-            repo.sendMessage(fromUserId, toUserId, "voice:" + url);
+            if (fromUserId == null || fromUserId.isEmpty()) {
+                Toast.makeText(this, "Lỗi: Không lấy được ID người dùng", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String voiceMessage = "voice:" + url;
+            repo.sendMessage(fromUserId, toUserId, voiceMessage);
         });
     }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (requestCode == RECORD_PERMISSION_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Đã được cấp quyền ghi âm", Toast.LENGTH_SHORT).show();
                 startRecording();
             } else {
                 Toast.makeText(this, "Cần quyền ghi âm để sử dụng tính năng này", Toast.LENGTH_SHORT).show();
             }
+        } else if (requestCode == STORAGE_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                openImageVideoPicker();
+            } else {
+                Toast.makeText(this, "Cần quyền truy cập bộ nhớ để chọn file", Toast.LENGTH_SHORT).show();
+            }
         }
     }
-
 
 }
