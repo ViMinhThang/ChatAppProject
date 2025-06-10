@@ -1,8 +1,8 @@
 package com.project.chatapp.adapter;
 
+import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.drawable.AnimatedVectorDrawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Handler;
@@ -15,10 +15,10 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -138,7 +138,8 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         holder.tvTime.setText(message.getTimeStamp());
         setMessageAlignment(holder.messageContainer, null, message.isSender());
 
-        String voiceUrl = message.getMediaUrl();
+        String voiceUrl = message.getContent().startsWith("voice:") ?
+                message.getContent().substring(6) : message.getContent();
 
         holder.ivPlayPause.setOnClickListener(v -> {
             if (holder.isPlaying) {
@@ -146,21 +147,6 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             } else {
                 holder.playVoice(voiceUrl);
             }
-        });
-
-        holder.seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (fromUser) {
-                    holder.seekTo(progress);
-                }
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
         });
     }
 
@@ -351,23 +337,21 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     static class VoiceMessageViewHolder extends RecyclerView.ViewHolder {
         ImageView ivPlayPause;
-        SeekBar seekBar;
-        TextView tvCurrentTime, tvDuration, tvTime;
+        TextView tvDuration, tvTime;
         LinearLayout messageContainer;
-
+        LinearLayout waveContainer;
         private MediaPlayer mediaPlayer;
         boolean isPlaying = false;
-        private Handler progressUpdateHandler = new Handler(Looper.getMainLooper());
-        private Runnable progressUpdateRunnable;
+        private Handler handler = new Handler(Looper.getMainLooper());
+        private ValueAnimator[] waveAnimators;
 
         VoiceMessageViewHolder(@NonNull View view) {
             super(view);
             ivPlayPause = view.findViewById(R.id.ivPlayPause);
-            seekBar = view.findViewById(R.id.seekBar);
-            tvCurrentTime = view.findViewById(R.id.tvCurrentTime);
             tvDuration = view.findViewById(R.id.tvDuration);
             tvTime = view.findViewById(R.id.tvTime);
             messageContainer = view.findViewById(R.id.messageContainer);
+            waveContainer = view.findViewById(R.id.waveContainer);
         }
 
         void playVoice(String url) {
@@ -380,7 +364,7 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                         isPlaying = true;
                         ivPlayPause.setImageResource(R.drawable.ic_pause);
                         tvDuration.setText(formatTime(mp.getDuration()));
-                        startProgressUpdate();
+                        animateWaveBars(true);
                     });
                     mediaPlayer.setOnCompletionListener(mp -> stopPlayback());
                     mediaPlayer.setOnErrorListener((mp, what, extra) -> {
@@ -397,7 +381,7 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 mediaPlayer.start();
                 isPlaying = true;
                 ivPlayPause.setImageResource(R.drawable.ic_pause);
-                startProgressUpdate();
+                animateWaveBars(true);
             }
         }
 
@@ -406,51 +390,14 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 mediaPlayer.pause();
                 isPlaying = false;
                 ivPlayPause.setImageResource(R.drawable.ic_play);
-                stopProgressUpdate();
-            }
-        }
-
-        void seekTo(int progress) {
-            if (mediaPlayer != null) {
-                int position = (mediaPlayer.getDuration() * progress) / 100;
-                mediaPlayer.seekTo(position);
-                tvCurrentTime.setText(formatTime(position));
-            }
-        }
-
-        private void startProgressUpdate() {
-            progressUpdateRunnable = new Runnable() {
-                @Override
-                public void run() {
-                    if (mediaPlayer != null && isPlaying) {
-                        try {
-                            int position = mediaPlayer.getCurrentPosition();
-                            int duration = mediaPlayer.getDuration();
-                            int progress = (position * 100) / duration;
-                            seekBar.setProgress(progress);
-                            tvCurrentTime.setText(formatTime(position));
-                            progressUpdateHandler.postDelayed(this, 100);
-                        } catch (IllegalStateException e) {
-                            Log.e("VoicePlayer", "MediaPlayer in illegal state: " + e.getMessage());
-                        }
-                    }
-                }
-            };
-            progressUpdateHandler.post(progressUpdateRunnable);
-        }
-
-        private void stopProgressUpdate() {
-            if (progressUpdateRunnable != null) {
-                progressUpdateHandler.removeCallbacks(progressUpdateRunnable);
+                animateWaveBars(false);
             }
         }
 
         private void stopPlayback() {
             isPlaying = false;
             ivPlayPause.setImageResource(R.drawable.ic_play);
-            seekBar.setProgress(0);
-            tvCurrentTime.setText("0:00");
-            stopProgressUpdate();
+            animateWaveBars(false);
         }
 
         void release() {
@@ -465,7 +412,49 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 }
                 mediaPlayer = null;
             }
-            stopProgressUpdate();
+            animateWaveBars(false);
+        }
+
+        private void animateWaveBars(boolean isPlaying) {
+            if (waveAnimators != null) {
+                for (ValueAnimator animator : waveAnimators) {
+                    if (animator != null) {
+                        animator.cancel();
+                    }
+                }
+            }
+
+            if (isPlaying) {
+                waveAnimators = new ValueAnimator[waveContainer.getChildCount()];
+                for (int i = 0; i < waveContainer.getChildCount(); i++) {
+                    View bar = waveContainer.getChildAt(i);
+                    ValueAnimator animator = ValueAnimator.ofInt(6, 16);
+                    animator.setDuration(600 + (i * 50));
+                    animator.setRepeatCount(ValueAnimator.INFINITE);
+                    animator.setRepeatMode(ValueAnimator.REVERSE);
+                    animator.setInterpolator(new AccelerateDecelerateInterpolator());
+
+                    int finalI = i;
+                    animator.addUpdateListener(animation -> {
+                        int value = (int) animation.getAnimatedValue();
+                        ViewGroup.LayoutParams params = bar.getLayoutParams();
+                        params.height = value + (finalI % 3) * 2;
+                        bar.setLayoutParams(params);
+                    });
+
+                    animator.setStartDelay(i * 100);
+                    animator.start();
+                    waveAnimators[i] = animator;
+                }
+            } else {
+                // Reset to default heights
+                for (int i = 0; i < waveContainer.getChildCount(); i++) {
+                    View bar = waveContainer.getChildAt(i);
+                    ViewGroup.LayoutParams params = bar.getLayoutParams();
+                    params.height = 8 + (i % 3) * 4;
+                    bar.setLayoutParams(params);
+                }
+            }
         }
 
         private String formatTime(int milliseconds) {

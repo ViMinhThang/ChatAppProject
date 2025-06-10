@@ -284,7 +284,6 @@ public class MessageActivity extends AppCompatActivity {
 
         });
         progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage("Uploading media...");
         progressDialog.setCancelable(false);
         setupPermissionLaunchers();
         TextView chatter = findViewById(R.id.chatter);
@@ -825,7 +824,6 @@ public class MessageActivity extends AppCompatActivity {
     private void cancelRecording() {
         voiceMessageManager.cancelRecording();
         hideRecordingUI();
-        Toast.makeText(this, "Đã hủy ghi âm", Toast.LENGTH_SHORT).show();
     }
 
     private void showRecordingUI() {
@@ -875,25 +873,17 @@ public class MessageActivity extends AppCompatActivity {
             hideRecordingUI();
         }
     }
-
     private void uploadVoiceMessage(File file) {
-        if (!file.exists()) {
-            Toast.makeText(this, "File ghi âm không tồn tại", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        progressDialog.setMessage("Đang tải lên tin nhắn thoại...");
-        progressDialog.show();
+        if (!file.exists()) return;
+        // progressDialog.show();
 
         CloudinaryHelper.uploadMedia(this, file.getAbsolutePath(), new CloudinaryHelper.UploadCallback() {
             @Override
             public void onSuccess(String url) {
                 runOnUiThread(() -> {
-                    progressDialog.dismiss();
+                    // progressDialog.dismiss();
                     if (url != null && !url.isEmpty()) {
                         sendVoiceMessage(url);
-                    } else {
-                        Toast.makeText(MessageActivity.this, "Lỗi: URL trống", Toast.LENGTH_SHORT).show();
                     }
                 });
             }
@@ -901,13 +891,12 @@ public class MessageActivity extends AppCompatActivity {
             @Override
             public void onError(String error) {
                 runOnUiThread(() -> {
-                    progressDialog.dismiss();
-                    Toast.makeText(MessageActivity.this,
-                            "Lỗi khi tải lên tin nhắn thoại: " + error, Toast.LENGTH_SHORT).show();
+                    // progressDialog.dismiss();
                 });
             }
         });
     }
+
 
     private void sendVoiceMessage(String url) {
         repo.getCurrentUserId(fromUserId -> {

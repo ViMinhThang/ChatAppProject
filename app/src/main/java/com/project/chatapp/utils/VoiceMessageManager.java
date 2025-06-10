@@ -40,27 +40,23 @@ public class VoiceMessageManager {
                 }
             }
 
-            // Tạo tên file với timestamp
             String fileName = "voice_" + System.currentTimeMillis() + ".m4a";
             audioFilePath = new File(audioDir, fileName).getAbsolutePath();
 
-            // Khởi tạo MediaRecorder
             mediaRecorder = new MediaRecorder();
             mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
             mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
             mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-            mediaRecorder.setAudioEncodingBitRate(128000);  // 128 kbps
-            mediaRecorder.setAudioSamplingRate(44100);      // 44.1 kHz
+            mediaRecorder.setAudioEncodingBitRate(128000);
+            mediaRecorder.setAudioSamplingRate(44100);
             mediaRecorder.setOutputFile(audioFilePath);
 
-            // Chuẩn bị và bắt đầu ghi âm
             mediaRecorder.prepare();
             mediaRecorder.start();
 
             isRecording = true;
             startTime = System.currentTimeMillis();
 
-            // Thông báo trạng thái thay đổi
             if (stateChangeListener != null) {
                 stateChangeListener.onStateChanged(true);
             }
@@ -93,12 +89,10 @@ public class VoiceMessageManager {
 
             isRecording = false;
 
-            // Thông báo trạng thái thay đổi
             if (stateChangeListener != null) {
                 stateChangeListener.onStateChanged(false);
             }
 
-            // Kiểm tra file đã được tạo thành công
             File audioFile = new File(audioFilePath);
             if (audioFile.exists() && audioFile.length() > 0) {
                 Log.d(TAG, "Recording stopped successfully: " + audioFilePath);
@@ -135,7 +129,6 @@ public class VoiceMessageManager {
             releaseMediaRecorder();
         }
 
-        // Xóa file đã ghi nếu có
         if (audioFilePath != null) {
             File file = new File(audioFilePath);
             if (file.exists()) {
@@ -151,7 +144,6 @@ public class VoiceMessageManager {
         isRecording = false;
         audioFilePath = null;
 
-        // Thông báo trạng thái thay đổi
         if (stateChangeListener != null) {
             stateChangeListener.onStateChanged(false);
         }
@@ -177,7 +169,6 @@ public class VoiceMessageManager {
 
         releaseMediaRecorder();
 
-        // Xóa file tạm nếu đang ghi âm
         if (isRecording && audioFilePath != null) {
             File file = new File(audioFilePath);
             if (file.exists()) {
@@ -202,12 +193,10 @@ public class VoiceMessageManager {
         }
     }
 
-    // Phương thức tiện ích để kiểm tra trạng thái
     public boolean isReady() {
         return !isRecording && mediaRecorder == null;
     }
 
-    // Phương thức để lấy thông tin file hiện tại
     public long getCurrentFileSize() {
         if (audioFilePath != null) {
             File file = new File(audioFilePath);
@@ -218,11 +207,12 @@ public class VoiceMessageManager {
         return 0;
     }
 
-    // Phương thức để format thời gian ghi âm
     public String getFormattedDuration() {
         long duration = getRecordingDuration();
         long seconds = (duration / 1000) % 60;
         long minutes = (duration / (1000 * 60)) % 60;
         return String.format("%02d:%02d", minutes, seconds);
     }
+
+
 }
