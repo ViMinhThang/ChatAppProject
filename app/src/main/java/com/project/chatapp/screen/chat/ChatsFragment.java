@@ -50,11 +50,9 @@ public class ChatsFragment extends Fragment {
         adapterStory = new CustomAdapterRVStory(listStory);
         repo = new ChatsRepository();
 
-        // Gán adapter cho danh sách story
         binding.rvStory.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
         binding.rvStory.setAdapter(adapterStory);
 
-        // Lấy userId rồi gán adapter chat
         new FirebaseMessengerRepository().getCurrentUserId(userId -> {
             adapterChat = new CustomAdapterRVChats(listChats, userId); // cần truyền thêm context nếu sửa adapter
             binding.rvChats.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false));
@@ -83,6 +81,6 @@ public class ChatsFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        binding = null; // Đừng quên dấu `;` ở đây
+        binding = null;
     }
 }

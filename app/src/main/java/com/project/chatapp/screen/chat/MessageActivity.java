@@ -7,17 +7,16 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.MediaStore;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.text.Editable;
-import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.MimeTypeMap;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -25,6 +24,11 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
@@ -42,6 +46,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.database.DatabaseReference;
 import com.project.chatapp.R;
 import com.project.chatapp.adapter.ChatApdater;
 import com.project.chatapp.data.ChatsRepository;
@@ -49,6 +54,7 @@ import com.project.chatapp.data.FirebaseMessengerRepository;
 import com.project.chatapp.model.ChatMessage;
 import com.project.chatapp.model.CallModel;
 import com.project.chatapp.screen.location.PickLocationActivity;
+import com.project.chatapp.utils.ChatUitls;
 import com.project.chatapp.utils.CloudinaryHelper;
 import com.project.chatapp.utils.TimeUtils;
 import com.google.firebase.database.FirebaseDatabase;
@@ -81,7 +87,7 @@ public class MessageActivity extends AppCompatActivity {
     private ChatApdater chatApdater;
     private FirebaseMessengerRepository repo;
     private String toUserId;
-
+    private DatabaseReference mDatabase;
     // Search
     private ActivityResultLauncher<Intent> settingsLauncher;
     private ActivityResultLauncher<String[]> requestPermissionLauncher;
@@ -108,12 +114,19 @@ public class MessageActivity extends AppCompatActivity {
             return insets;
         });
         toUserId = getIntent().getStringExtra("userId");
-
+        repo = new FirebaseMessengerRepository();
         initViews();
         setupRecyclerView();
         setupFirebase();
         setupEventListeners();
         setupPermissionLaunchers();
+        repo.getCurrentUserId(myUserId -> {
+            if (myUserId != null) {
+                mDatabase.child("users").child(myUserId).child("chats").child(toUserId)
+                        .child("unread_count").setValue(0)
+                        .addOnFailureListener(e -> Log.e("MessageActivity", "Failed to reset unread_count", e));
+            }
+        });
     }
 
     private void initViews() {
@@ -146,6 +159,18 @@ public class MessageActivity extends AppCompatActivity {
 
     private void setupEventListeners() {
         btnSend.setOnClickListener(v -> sendMessage());
+
+//// Thêm tên ở placeHolder
+//        TextView chatterName = findViewById(R.id.chatter);
+//        String userName = getIntent().getStringExtra("userName");
+//        Log.d("DEBUG", "Received userName: " + userName);
+//        if (userName != null) {
+//            chatterName.setText(userName);
+//        } else {
+//            Log.d("DEBUG", "userName is null");
+//        }
+
+
         btnBack.setOnClickListener(v -> {
             startActivity(new Intent(this, ChatsActivity.class));
         });
@@ -170,8 +195,8 @@ public class MessageActivity extends AppCompatActivity {
                         .child("calls_status").child(myUserId).child("end").setValue(false);
                 String channelName = myUserId.compareTo(toUserId) < 0 ? myUserId + "_" + toUserId : toUserId + "_" + myUserId;
                 ChatsRepository chatsRepository = new ChatsRepository();
-                chatsRepository.getUserNameById(toUserId, name -> {
-                    chatsRepository.getUserNameById(myUserId, myName -> {
+                chatsRepository.getUserNameById(myUserId, myName -> {
+                    chatsRepository.getUserNameById(toUserId, name -> {
                         long timestamp = System.currentTimeMillis();
                         CallModel call = new CallModel(myUserId, toUserId, "audio", channelName, myName, timestamp);
                         com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
@@ -233,11 +258,24 @@ public class MessageActivity extends AppCompatActivity {
             }
 
         });
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Uploading media...");
+        progressDialog.setCancelable(false);
+        setupPermissionLaunchers();
+        TextView chatter = findViewById(R.id.chatter);
+        ChatsRepository chatsRepository = new ChatsRepository();
+        chatsRepository.getUserNameById(toUserId, name -> {
+            if (name != null) {
+                chatter.setText(name);
+            } else {
+                chatter.setText("Unknown");
+            }
+        });
     }
 
     private void setupFirebase() {
         repo = new FirebaseMessengerRepository();
-
+        mDatabase = FirebaseDatabase.getInstance().getReference();
         repo.getCurrentUserId(userId -> {
             Log.d("UserID", "My ID: " + userId);
 
@@ -254,8 +292,20 @@ public class MessageActivity extends AppCompatActivity {
                     recyclerView.scrollToPosition(messageList.size() - 1);
                 }
             });
+            String chatId = ChatUitls.getChatId(userId, toUserId);
+
+            repo.generateSmartReplies(chatId, userId, suggestions -> {
+                runOnUiThread(() -> {
+                    if (!suggestions.isEmpty()) {
+                        etMessage.setHint(String.join(" | ", suggestions));
+                    } else {
+                        etMessage.setHint("Nhập tin nhắn...");
+                    }
+                });
+            });
         });
     }
+
     private void sendCordinate(String corr) {
 
         repo.getCurrentUserId(fromUserId -> {
@@ -263,13 +313,24 @@ public class MessageActivity extends AppCompatActivity {
             etMessage.setText("");
         });
     }
+
     private void sendMessage() {
         String text = etMessage.getText().toString().trim();
         if (text.isEmpty()) return;
 
         repo.getCurrentUserId(fromUserId -> {
+            String chatId = ChatUitls.getChatId(fromUserId, toUserId);
             repo.sendMessage(fromUserId, toUserId, text);
             etMessage.setText("");
+            repo.generateSmartReplies(chatId, fromUserId, suggestions -> {
+                runOnUiThread(() -> {
+                    if (!suggestions.isEmpty()) {
+                        etMessage.setHint(String.join(" | ", suggestions));
+                    } else {
+                        etMessage.setHint("Nhập tin nhắn...");
+                    }
+                });
+            });
         });
     }
 
@@ -513,35 +574,14 @@ public class MessageActivity extends AppCompatActivity {
                 });
     }
 
-    private void showPermissionDeniedDialog() {
-        if (!isReturningFromSettings) {
-            new AlertDialog.Builder(this)
-                    .setTitle("Permission Required")
-                    .setMessage("Camera and storage permissions are required to take photos. Please enable them in app settings.")
-                    .setPositiveButton("Open Settings", (dialog, which) -> {
-                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                        Uri uri = Uri.fromParts("package", getPackageName(), null);
-                        intent.setData(uri);
-                        settingsLauncher.launch(intent);
-                    })
-                    .setNegativeButton("Cancel", null)
-                    .show();
-        } else {
-            super.onBackPressed();
-        }
-    }
-
-    private void buildChannelName(ChannelCallback callback) {
-        repo.getCurrentUserId(myUserId -> {
-            if (myUserId == null || myUserId.isEmpty() || toUserId == null || toUserId.isEmpty()) {
+    private void buildChannelName(ChannelNameCallback callback) {
+        // Lấy userId hiện tại từ FirebaseAuth qua repo
+        repo.getCurrentUserId(myId -> {
+            if (myId == null || myId.isEmpty()) {
                 callback.onChannelNameBuilt(null);
                 return;
             }
-
-            String channelName = myUserId.compareTo(toUserId) < 0
-                    ? myUserId + "_" + toUserId
-                    : toUserId + "_" + myUserId;
-
+            String channelName = myId.compareTo(toUserId) < 0 ? myId + "_" + toUserId : toUserId + "_" + myId;
             callback.onChannelNameBuilt(channelName);
         });
     }
@@ -606,7 +646,93 @@ public class MessageActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+            if (requestCode == PICK_IMAGE_VIDEO_REQUEST && data != null) {
+                Uri selectedFileUri = data.getData();
+                if (selectedFileUri != null) {
+                    Log.d("MessageActivity", "Selected URI: " + selectedFileUri.toString());
+                    try {
+                        String fileName = "media_" + System.currentTimeMillis() + getFileExtension(selectedFileUri);
+                        File destinationFile = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), fileName);
+                        copyUriToFile(selectedFileUri, destinationFile);
+
+                        Log.d("MessageActivity", "Copied to private storage: " + destinationFile.getAbsolutePath());
+                        uploadMediaToCloudinary(destinationFile.getAbsolutePath());
+                    } catch (IOException e) {
+                        Log.e("MessageActivity", "Error copying file: " + e.getMessage());
+                        Toast.makeText(this, "Error processing selected file", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        } else {
+            Log.d("MessageActivity", "Selection cancelled or failed. Result code: " + resultCode);
+        }
+    }
+
+    private String getFileExtension(Uri uri) {
+        String extension = MimeTypeMap.getSingleton()
+                .getExtensionFromMimeType(getContentResolver().getType(uri));
+        return extension != null ? "." + extension : "";
+    }
+
+    private void copyUriToFile(Uri uri, File destination) throws IOException {
+        try (java.io.InputStream input = getContentResolver().openInputStream(uri);
+             java.io.OutputStream output = new java.io.FileOutputStream(destination)) {
+            byte[] buffer = new byte[4 * 1024];
+            int read;
+            while ((read = input.read(buffer)) != -1) {
+                output.write(buffer, 0, read);
+            }
+            output.flush();
+        }
+    }
+
     interface ChannelCallback {
+        void onChannelNameBuilt(String channelName);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (pendingMediaUri != null) {
+            revokeUriPermission(pendingMediaUri,
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (isReturningFromSettings) {
+            isReturningFromSettings = false;
+            // checkAndRequestCameraPermissions();
+        }
+    }
+
+    private void showPermissionDeniedDialog() {
+        if (!isReturningFromSettings) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Permission Required")
+                    .setMessage("Camera and storage permissions are required to take photos. Please enable them in app settings.")
+                    .setPositiveButton("Open Settings", (dialog, which) -> {
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        Uri uri = Uri.fromParts("package", getPackageName(), null);
+                        intent.setData(uri);
+                        settingsLauncher.launch(intent);
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        } else {
+            Toast.makeText(this, "Permissions are still required to use the camera", Toast.LENGTH_LONG).show();
+            isReturningFromSettings = false;
+        }
+    }
+
+
+    public interface ChannelNameCallback {
         void onChannelNameBuilt(String channelName);
     }
 }

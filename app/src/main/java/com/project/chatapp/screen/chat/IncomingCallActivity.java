@@ -13,11 +13,15 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 import com.project.chatapp.data.FirebaseMessengerRepository;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 
 public class IncomingCallActivity extends AppCompatActivity {
     private String myUserId;
     private String otherUserId;
     private DatabaseReference callRef;
+    private Ringtone ringtone;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,10 +39,18 @@ public class IncomingCallActivity extends AppCompatActivity {
         Button btnAccept = findViewById(R.id.btnAccept);
         Button btnDecline = findViewById(R.id.btnDecline);
 
+        // Phát chuông khi có cuộc gọi đến
+        Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+        ringtone = RingtoneManager.getRingtone(getApplicationContext(), notification);
+        if (ringtone != null && !ringtone.isPlaying()) {
+            ringtone.play();
+        }
+
         // Lấy myUserId thực tế từ Firebase trước khi lắng nghe node và xử lý các thao tác
         new FirebaseMessengerRepository().getCurrentUserId(myUserIdReal -> {
             if (myUserIdReal == null || myUserIdReal.isEmpty()) {
                 android.widget.Toast.makeText(this, "Không lấy được userId, vui lòng đăng nhập lại!", android.widget.Toast.LENGTH_LONG).show();
+                if (ringtone != null && ringtone.isPlaying()) ringtone.stop();
                 finish();
                 return;
             }
@@ -51,8 +63,9 @@ public class IncomingCallActivity extends AppCompatActivity {
                     if (!snapshot.exists()) {
                         Log.d("CALL_DEBUG", "Node /calls/" + myUserId + " đã bị xóa, đóng IncomingCallActivity");
                         if (!isFinishing()) {
-                            runOnUiThread(() -> android.widget.Toast.makeText(IncomingCallActivity.this, "Cuộc gọi đã bị hủy hoặc hết hạn!", android.widget.Toast.LENGTH_SHORT).show());
+                            runOnUiThread(() -> android.widget.Toast.makeText(IncomingCallActivity.this, "Cuộc gọi đã bị hủy!", android.widget.Toast.LENGTH_SHORT).show());
                         }
+                        if (ringtone != null && ringtone.isPlaying()) ringtone.stop();
                         finish();
                     }
                 }
@@ -61,6 +74,7 @@ public class IncomingCallActivity extends AppCompatActivity {
             });
 
             btnAccept.setOnClickListener(v -> {
+                if (ringtone != null && ringtone.isPlaying()) ringtone.stop();
                 // Lấy userId thực tế từ Firebase (đã lấy ở trên)
                 Log.d("CALL_DEBUG", "Accept call: channelName=" + channelName + ", myUserId=" + myUserId + ", fromUserId=" + fromUserId);
                 if (myUserId == null || myUserId.isEmpty()) {
@@ -85,6 +99,7 @@ public class IncomingCallActivity extends AppCompatActivity {
                 });
             });
             btnDecline.setOnClickListener(v -> {
+                if (ringtone != null && ringtone.isPlaying()) ringtone.stop();
                 // Chỉ xóa node cuộc gọi của callee khi từ chối
                 com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
                     .child("calls").child(myUserId).removeValue();
@@ -94,6 +109,14 @@ public class IncomingCallActivity extends AppCompatActivity {
                 finish();
             });
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (ringtone != null && ringtone.isPlaying()) {
+            ringtone.stop();
+        }
     }
 
     private void endCall() {

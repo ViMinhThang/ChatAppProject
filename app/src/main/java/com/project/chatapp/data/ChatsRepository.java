@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.*;
+import com.project.chatapp.R;
 import com.project.chatapp.model.Chat.ChatsModel;
 import com.project.chatapp.model.Story.StoryModel;
 import com.project.chatapp.utils.TimeUtils;
@@ -86,18 +87,17 @@ public class ChatsRepository {
                         for (Map.Entry<String, Object> entry : friendsMap.entrySet()) {
                             Map<String, Object> friendData = (Map<String, Object>) entry.getValue();
                             String friendName = (String) friendData.get("name");
-                            stories.add(new StoryModel(R.drawable.common_google_signin_btn_icon_dark, friendName));
+                            stories.add(new StoryModel(R.drawable.pic1, friendName));
                         }
                     }
 
-                    // Load chats
                     DataSnapshot chatsSnapshot = userSnapshot.child("chats");
                     for (DataSnapshot chatSnapshot : chatsSnapshot.getChildren()) {
                         String chatId = chatSnapshot.getKey();
                         if (chatId == null || chatId.startsWith("group")) continue;
 
-                        String lastMessage = chatSnapshot.child("last_message").getValue(String.class);
-                        String lastMessageTime = chatSnapshot.child("last_message_time").getValue(String.class);
+                        String lastMessage = chatSnapshot.child("last_content").getValue(String.class).toString();
+                        String lastMessageTime = chatSnapshot.child("last_content_time").getValue(String.class);
                         Long value = chatSnapshot.child("unread").getValue(Long.class);
                         long unreadCount = (value != null) ? value.longValue() : 0L;
 
@@ -109,7 +109,7 @@ public class ChatsRepository {
                                 String phone = otherUserSnapshot.child("phone").getValue(String.class);
                                 String timeAgo = TimeUtils.getTimeAgo(lastMessageTime);
 
-                                chats.add(new ChatsModel(R.drawable.common_google_signin_btn_icon_dark_normal, status, name, lastMessage, timeAgo, unreadCount, phone, chatId));
+                                chats.add(new ChatsModel(R.drawable.pic1, status, name, lastMessage, timeAgo, unreadCount, phone, chatId));
                                 chatsCallback.onChatsLoaded(new ArrayList<>(chats));
                             }
 

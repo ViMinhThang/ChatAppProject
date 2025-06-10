@@ -2,12 +2,12 @@
 <project version="4">
   <component name="deploymentTargetSelector">
     <selectionStates>
-      <SelectionState runConfigName="ChatApp">
+      <SelectionState runConfigName="Unnamed">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-06-08T12:32:23.257713200Z">
+        <DropdownSelection timestamp="2025-06-09T16:43:48.781780400Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=Y9X4EIVSMRP7SCFA" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\Tien Thanh\.android\avd\Pixel_7a.avd" />
             </handle>
           </Target>
         </DropdownSelection>

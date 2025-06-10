@@ -40,7 +40,6 @@ public class OTPVerifyActivity extends AppCompatActivity {
         otp4 = findViewById(R.id.otp4);
         otp5 = findViewById(R.id.otp5);
         otp6 = findViewById(R.id.otp6);
-        String code = createCode();
         phoneNumber = getIntent().getStringExtra("phoneNumber");
         phoneNumber = "+84" + phoneNumber.substring(1);
         isNewUser = getIntent().getBooleanExtra("isNewUser", false);
@@ -61,6 +60,11 @@ public class OTPVerifyActivity extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
                 if (!s.toString().trim().isEmpty()) {
                     String code = createCode();
                     if (code.length() == 6) {
@@ -71,11 +75,6 @@ public class OTPVerifyActivity extends AppCompatActivity {
                         }
                     }
                 }
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-
             }
         });
 
@@ -135,11 +134,13 @@ public class OTPVerifyActivity extends AppCompatActivity {
 
         @Override
         public void onVerificationFailed(FirebaseException e) {
+            Log.e("OTP_DEBUG", "Verification failed: " + e.getMessage());
             Toast.makeText(OTPVerifyActivity.this, "Lỗi: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
 
         @Override
         public void onCodeSent(String verificationId, PhoneAuthProvider.ForceResendingToken token) {
+            Log.d("OTP_DEBUG", "onCodeSent: verificationId = " + verificationId);
             OTPVerifyActivity.this.verificationId = verificationId;
         }
 

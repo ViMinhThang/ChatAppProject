@@ -1,5 +1,7 @@
 package com.project.chatapp.model.Chat;
 
+import android.util.Log;
+
 public class ChatsModel {
     private int img;
     private String name;
@@ -8,7 +10,6 @@ public class ChatsModel {
     private long unread;
     String userPhoneNumber;
     private String userId;
-
 
     public ChatsModel(int img, String status, String name, String lastMessage, String time, long unread, String userPhoneNumber, String userId) {
         this.img = img;
@@ -33,6 +34,8 @@ public class ChatsModel {
     }
 
     public String getName() {
+        Log.d("DEBUG", "ChatsModel returning name: " + name);
+
         return name;
     }
 
