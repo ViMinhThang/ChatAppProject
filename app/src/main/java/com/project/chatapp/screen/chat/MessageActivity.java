@@ -6,18 +6,18 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.drawable.AnimatedVectorDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.webkit.MimeTypeMap;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -26,6 +26,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -33,13 +35,13 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.firebase.database.DatabaseReference;
 import com.project.chatapp.R;
 import com.project.chatapp.adapter.ChatApdater;
 import com.project.chatapp.data.ChatsRepository;
@@ -47,29 +49,23 @@ import com.project.chatapp.data.FirebaseMessengerRepository;
 import com.project.chatapp.model.ChatMessage;
 import com.project.chatapp.model.CallModel;
 import com.project.chatapp.screen.location.PickLocationActivity;
-import com.project.chatapp.utils.ChatUitls;
 import com.project.chatapp.utils.CloudinaryHelper;
-import com.project.chatapp.utils.VoiceMessageManager;
+import com.project.chatapp.utils.TimeUtils;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 public class MessageActivity extends AppCompatActivity {
     private static final int PICK_IMAGE_VIDEO_REQUEST = 102;
-    private static final int RECORD_PERMISSION_CODE = 1001;
-    private ImageView btnVoice;
-    private LinearLayout inputContainer, recordingStateView;
-    private TextView tvRecordingTimer, btnCancelRecording, btnSendRecording;
-    private ImageView ivRecordingIcon;
-    private VoiceMessageManager voiceMessageManager;
-    private CountDownTimer recordingTimer;
-    private final long recordingMinimumDuration = 1000L;
+
     // UI Components
     private RecyclerView recyclerView;
     private EditText etMessage, etSearchInput;
@@ -85,7 +81,7 @@ public class MessageActivity extends AppCompatActivity {
     private ChatApdater chatApdater;
     private FirebaseMessengerRepository repo;
     private String toUserId;
-    private DatabaseReference mDatabase;
+
     // Search
     private ActivityResultLauncher<Intent> settingsLauncher;
     private ActivityResultLauncher<String[]> requestPermissionLauncher;
@@ -112,20 +108,12 @@ public class MessageActivity extends AppCompatActivity {
             return insets;
         });
         toUserId = getIntent().getStringExtra("userId");
-        repo = new FirebaseMessengerRepository();
+
         initViews();
         setupRecyclerView();
         setupFirebase();
         setupEventListeners();
         setupPermissionLaunchers();
-        setupVoiceMessage();
-        repo.getCurrentUserId(myUserId -> {
-            if (myUserId != null) {
-                mDatabase.child("users").child(myUserId).child("chats").child(toUserId)
-                        .child("unread_count").setValue(0)
-                        .addOnFailureListener(e -> Log.e("MessageActivity", "Failed to reset unread_count", e));
-            }
-        });
     }
 
     private void initViews() {
@@ -148,14 +136,6 @@ public class MessageActivity extends AppCompatActivity {
         progressDialog = new ProgressDialog(this);
         searchResults = new ArrayList<>();
         searchPositions = new ArrayList<>();
-        btnVoice = findViewById(R.id.btnVoice);
-        inputContainer = findViewById(R.id.inputContainer);
-        recordingStateView = findViewById(R.id.recordingStateView);
-        tvRecordingTimer = findViewById(R.id.tvRecordingTimer);
-        btnCancelRecording = findViewById(R.id.btnCancelRecording);
-        btnSendRecording = findViewById(R.id.btnSendRecording);
-        ivRecordingIcon = findViewById(R.id.ivRecordingIcon);
-
     }
 
     private void setupRecyclerView() {
@@ -165,37 +145,7 @@ public class MessageActivity extends AppCompatActivity {
     }
 
     private void setupEventListeners() {
-        etMessage.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (s != null && s.length() > 0) {
-                    btnSend.setVisibility(View.VISIBLE);
-                    btnVoice.setVisibility(View.GONE);
-                } else {
-                    btnSend.setVisibility(View.GONE);
-                    btnVoice.setVisibility(View.VISIBLE);
-                }
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {}
-        });
         btnSend.setOnClickListener(v -> sendMessage());
-
-//// Thêm tên ở placeHolder
-//        TextView chatterName = findViewById(R.id.chatter);
-//        String userName = getIntent().getStringExtra("userName");
-//        Log.d("DEBUG", "Received userName: " + userName);
-//        if (userName != null) {
-//            chatterName.setText(userName);
-//        } else {
-//            Log.d("DEBUG", "userName is null");
-//        }
-
-
         btnBack.setOnClickListener(v -> {
             startActivity(new Intent(this, ChatsActivity.class));
         });
@@ -220,8 +170,8 @@ public class MessageActivity extends AppCompatActivity {
                         .child("calls_status").child(myUserId).child("end").setValue(false);
                 String channelName = myUserId.compareTo(toUserId) < 0 ? myUserId + "_" + toUserId : toUserId + "_" + myUserId;
                 ChatsRepository chatsRepository = new ChatsRepository();
-                chatsRepository.getUserNameById(myUserId, myName -> {
-                    chatsRepository.getUserNameById(toUserId, name -> {
+                chatsRepository.getUserNameById(toUserId, name -> {
+                    chatsRepository.getUserNameById(myUserId, myName -> {
                         long timestamp = System.currentTimeMillis();
                         CallModel call = new CallModel(myUserId, toUserId, "audio", channelName, myName, timestamp);
                         com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
@@ -283,23 +233,11 @@ public class MessageActivity extends AppCompatActivity {
             }
 
         });
-        progressDialog = new ProgressDialog(this);
-        progressDialog.setCancelable(false);
-        setupPermissionLaunchers();
-        TextView chatter = findViewById(R.id.chatter);
-        ChatsRepository chatsRepository = new ChatsRepository();
-        chatsRepository.getUserNameById(toUserId, name -> {
-            if (name != null) {
-                chatter.setText(name);
-            } else {
-                chatter.setText("Unknown");
-            }
-        });
     }
 
     private void setupFirebase() {
         repo = new FirebaseMessengerRepository();
-        mDatabase = FirebaseDatabase.getInstance().getReference();
+
         repo.getCurrentUserId(userId -> {
             Log.d("UserID", "My ID: " + userId);
 
@@ -316,20 +254,8 @@ public class MessageActivity extends AppCompatActivity {
                     recyclerView.scrollToPosition(messageList.size() - 1);
                 }
             });
-            String chatId = ChatUitls.getChatId(userId, toUserId);
-
-            repo.generateSmartReplies(chatId, userId, suggestions -> {
-                runOnUiThread(() -> {
-                    if (!suggestions.isEmpty()) {
-                        etMessage.setHint(String.join(" | ", suggestions));
-                    } else {
-                        etMessage.setHint("Nhập tin nhắn...");
-                    }
-                });
-            });
         });
     }
-
     private void sendCordinate(String corr) {
 
         repo.getCurrentUserId(fromUserId -> {
@@ -337,24 +263,13 @@ public class MessageActivity extends AppCompatActivity {
             etMessage.setText("");
         });
     }
-
     private void sendMessage() {
         String text = etMessage.getText().toString().trim();
         if (text.isEmpty()) return;
 
         repo.getCurrentUserId(fromUserId -> {
-            String chatId = ChatUitls.getChatId(fromUserId, toUserId);
             repo.sendMessage(fromUserId, toUserId, text);
             etMessage.setText("");
-            repo.generateSmartReplies(chatId, fromUserId, suggestions -> {
-                runOnUiThread(() -> {
-                    if (!suggestions.isEmpty()) {
-                        etMessage.setHint(String.join(" | ", suggestions));
-                    } else {
-                        etMessage.setHint("Nhập tin nhắn...");
-                    }
-                });
-            });
         });
     }
 
@@ -382,7 +297,6 @@ public class MessageActivity extends AppCompatActivity {
             }
         });
     }
-
 
     private void sendMediaMessage(String mediaUrl) {
         Log.d("MessageActivity", "Sending media message: " + mediaUrl);
@@ -599,14 +513,35 @@ public class MessageActivity extends AppCompatActivity {
                 });
     }
 
-    private void buildChannelName(ChannelNameCallback callback) {
-        // Lấy userId hiện tại từ FirebaseAuth qua repo
-        repo.getCurrentUserId(myId -> {
-            if (myId == null || myId.isEmpty()) {
+    private void showPermissionDeniedDialog() {
+        if (!isReturningFromSettings) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Permission Required")
+                    .setMessage("Camera and storage permissions are required to take photos. Please enable them in app settings.")
+                    .setPositiveButton("Open Settings", (dialog, which) -> {
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        Uri uri = Uri.fromParts("package", getPackageName(), null);
+                        intent.setData(uri);
+                        settingsLauncher.launch(intent);
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    private void buildChannelName(ChannelCallback callback) {
+        repo.getCurrentUserId(myUserId -> {
+            if (myUserId == null || myUserId.isEmpty() || toUserId == null || toUserId.isEmpty()) {
                 callback.onChannelNameBuilt(null);
                 return;
             }
-            String channelName = myId.compareTo(toUserId) < 0 ? myId + "_" + toUserId : toUserId + "_" + myId;
+
+            String channelName = myUserId.compareTo(toUserId) < 0
+                    ? myUserId + "_" + toUserId
+                    : toUserId + "_" + myUserId;
+
             callback.onChannelNameBuilt(channelName);
         });
     }
@@ -671,262 +606,7 @@ public class MessageActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK) {
-            if (requestCode == PICK_IMAGE_VIDEO_REQUEST && data != null) {
-                Uri selectedFileUri = data.getData();
-                if (selectedFileUri != null) {
-                    Log.d("MessageActivity", "Selected URI: " + selectedFileUri.toString());
-                    try {
-                        String fileName = "media_" + System.currentTimeMillis() + getFileExtension(selectedFileUri);
-                        File destinationFile = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), fileName);
-                        copyUriToFile(selectedFileUri, destinationFile);
-
-                        Log.d("MessageActivity", "Copied to private storage: " + destinationFile.getAbsolutePath());
-                        uploadMediaToCloudinary(destinationFile.getAbsolutePath());
-                    } catch (IOException e) {
-                        Log.e("MessageActivity", "Error copying file: " + e.getMessage());
-                        Toast.makeText(this, "Error processing selected file", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            }
-        } else {
-            Log.d("MessageActivity", "Selection cancelled or failed. Result code: " + resultCode);
-        }
-    }
-
-    private String getFileExtension(Uri uri) {
-        String extension = MimeTypeMap.getSingleton()
-                .getExtensionFromMimeType(getContentResolver().getType(uri));
-        return extension != null ? "." + extension : "";
-    }
-
-    private void copyUriToFile(Uri uri, File destination) throws IOException {
-        try (java.io.InputStream input = getContentResolver().openInputStream(uri);
-             java.io.OutputStream output = new java.io.FileOutputStream(destination)) {
-            byte[] buffer = new byte[4 * 1024];
-            int read;
-            while ((read = input.read(buffer)) != -1) {
-                output.write(buffer, 0, read);
-            }
-            output.flush();
-        }
-    }
-
     interface ChannelCallback {
         void onChannelNameBuilt(String channelName);
     }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (voiceMessageManager != null) {
-            voiceMessageManager.release();
-        }
-        stopRecordingTimer();
-        if (pendingMediaUri != null) {
-            revokeUriPermission(pendingMediaUri,
-                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (isReturningFromSettings) {
-            isReturningFromSettings = false;
-            // checkAndRequestCameraPermissions();
-        }
-    }
-
-    private void showPermissionDeniedDialog() {
-        if (!isReturningFromSettings) {
-            new AlertDialog.Builder(this)
-                    .setTitle("Permission Required")
-                    .setMessage("Camera and storage permissions are required to take photos. Please enable them in app settings.")
-                    .setPositiveButton("Open Settings", (dialog, which) -> {
-                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                        Uri uri = Uri.fromParts("package", getPackageName(), null);
-                        intent.setData(uri);
-                        settingsLauncher.launch(intent);
-                    })
-                    .setNegativeButton("Cancel", null)
-                    .show();
-        } else {
-            Toast.makeText(this, "Permissions are still required to use the camera", Toast.LENGTH_LONG).show();
-            isReturningFromSettings = false;
-        }
-    }
-
-
-    public interface ChannelNameCallback {
-        void onChannelNameBuilt(String channelName);
-    }
-    // Thêm các phương thức này vào cuối class, trước dấu } cuối cùng
-    private void setupVoiceMessage() {
-        voiceMessageManager = new VoiceMessageManager(this);
-
-        voiceMessageManager.setOnRecordingStateChangeListener(isRecording -> {
-            runOnUiThread(() -> updateRecordingUI(isRecording));
-        });
-
-        btnVoice.setOnClickListener(v -> {
-            if (checkRecordPermission()) {
-                startRecording();
-            } else {
-                requestRecordPermission();
-            }
-        });
-
-        btnCancelRecording.setOnClickListener(v -> cancelRecording());
-        btnSendRecording.setOnClickListener(v -> stopRecording());
-    }
-
-    private boolean checkRecordPermission() {
-        return ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) ==
-                PackageManager.PERMISSION_GRANTED;
-    }
-
-    private void requestRecordPermission() {
-        ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.RECORD_AUDIO},
-                RECORD_PERMISSION_CODE);
-    }
-
-    private void startRecording() {
-        if (voiceMessageManager.isRecording()) return;
-
-        voiceMessageManager.startRecording();
-        showRecordingUI();
-        startRecordingTimer();
-    }
-
-    private void stopRecording() {
-        long recordingDuration = voiceMessageManager.getRecordingDuration();
-        if (recordingDuration < recordingMinimumDuration) {
-            Toast.makeText(this, "Tin nhắn thoại quá ngắn", Toast.LENGTH_SHORT).show();
-            cancelRecording();
-            return;
-        }
-
-        File recordingFile = voiceMessageManager.stopRecording();
-        hideRecordingUI();
-
-        if (recordingFile != null && recordingFile.exists() && recordingFile.length() > 0) {
-            uploadVoiceMessage(recordingFile);
-        } else {
-            Toast.makeText(this, "Lỗi: File ghi âm không hợp lệ", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void cancelRecording() {
-        voiceMessageManager.cancelRecording();
-        hideRecordingUI();
-    }
-
-    private void showRecordingUI() {
-        inputContainer.setVisibility(View.GONE);
-        recordingStateView.setVisibility(View.VISIBLE);
-
-        if (ivRecordingIcon.getDrawable() instanceof AnimatedVectorDrawable) {
-            ((AnimatedVectorDrawable) ivRecordingIcon.getDrawable()).start();
-        }
-    }
-
-    private void hideRecordingUI() {
-        inputContainer.setVisibility(View.VISIBLE);
-        recordingStateView.setVisibility(View.GONE);
-        stopRecordingTimer();
-    }
-
-    private void startRecordingTimer() {
-        recordingTimer = new CountDownTimer(Long.MAX_VALUE, 1000) {
-            int seconds = 0;
-
-            @Override
-            public void onTick(long millisUntilFinished) {
-                seconds++;
-                int minutes = seconds / 60;
-                int remainingSeconds = seconds % 60;
-                tvRecordingTimer.setText(String.format(Locale.getDefault(), "%02d:%02d", minutes, remainingSeconds));
-            }
-
-            @Override
-            public void onFinish() {}
-        };
-        recordingTimer.start();
-    }
-
-    private void stopRecordingTimer() {
-        if (recordingTimer != null) {
-            recordingTimer.cancel();
-            recordingTimer = null;
-        }
-    }
-
-    private void updateRecordingUI(boolean isRecording) {
-        if (isRecording) {
-            showRecordingUI();
-        } else {
-            hideRecordingUI();
-        }
-    }
-    private void uploadVoiceMessage(File file) {
-        if (!file.exists()) return;
-        // progressDialog.show();
-
-        CloudinaryHelper.uploadMedia(this, file.getAbsolutePath(), new CloudinaryHelper.UploadCallback() {
-            @Override
-            public void onSuccess(String url) {
-                runOnUiThread(() -> {
-                    // progressDialog.dismiss();
-                    if (url != null && !url.isEmpty()) {
-                        sendVoiceMessage(url);
-                    }
-                });
-            }
-
-            @Override
-            public void onError(String error) {
-                runOnUiThread(() -> {
-                    // progressDialog.dismiss();
-                });
-            }
-        });
-    }
-
-
-    private void sendVoiceMessage(String url) {
-        repo.getCurrentUserId(fromUserId -> {
-            if (fromUserId == null || fromUserId.isEmpty()) {
-                Toast.makeText(this, "Lỗi: Không lấy được ID người dùng", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            String voiceMessage = "voice:" + url;
-            repo.sendMessage(fromUserId, toUserId, voiceMessage);
-        });
-    }
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        if (requestCode == RECORD_PERMISSION_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Đã được cấp quyền ghi âm", Toast.LENGTH_SHORT).show();
-                startRecording();
-            } else {
-                Toast.makeText(this, "Cần quyền ghi âm để sử dụng tính năng này", Toast.LENGTH_SHORT).show();
-            }
-        } else if (requestCode == STORAGE_PERMISSION_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                openImageVideoPicker();
-            } else {
-                Toast.makeText(this, "Cần quyền truy cập bộ nhớ để chọn file", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
 }
