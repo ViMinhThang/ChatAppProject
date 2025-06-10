@@ -896,8 +896,6 @@ public class MessageActivity extends AppCompatActivity {
             }
         });
     }
-
-
     private void sendVoiceMessage(String url) {
         repo.getCurrentUserId(fromUserId -> {
             if (fromUserId == null || fromUserId.isEmpty()) {
