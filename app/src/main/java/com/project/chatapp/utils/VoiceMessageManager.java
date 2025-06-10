@@ -32,8 +32,8 @@ public class VoiceMessageManager {
     public void startRecording() {
         if (isRecording) return;
 
-        recordingFile = new File(context.getCacheDir(), 
-            "voice_message_" + System.currentTimeMillis() + ".mp3");
+        recordingFile = new File(context.getCacheDir(),
+                "voice_message_" + System.currentTimeMillis() + ".m4a");
 
         mediaRecorder = new MediaRecorder();
         try {

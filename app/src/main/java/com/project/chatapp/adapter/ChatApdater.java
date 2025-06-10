@@ -2,7 +2,11 @@ package com.project.chatapp.adapter;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.drawable.AnimatedVectorDrawable;
+import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.BackgroundColorSpan;
@@ -14,6 +18,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,19 +33,18 @@ import com.project.chatapp.R;
 import com.project.chatapp.model.ChatMessage;
 import com.project.chatapp.screen.chat.ImageViewerActivity;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
+import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+
     private static final int VIEW_TYPE_TEXT = 1;
     private static final int VIEW_TYPE_IMAGE = 2;
     private static final int VIEW_TYPE_VIDEO = 3;
     private static final int VIEW_TYPE_LOCATION = 4;
+    private static final int VIEW_TYPE_VOICE = 5;
 
     private List<ChatMessage> messageList;
     private String searchQuery = "";
@@ -67,6 +71,8 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public int getItemViewType(int position) {
         ChatMessage message = messageList.get(position);
         switch (message.getMessageType()) {
+            case VOICE:
+                return VIEW_TYPE_VOICE;
             case IMAGE:
                 return VIEW_TYPE_IMAGE;
             case VIDEO:
@@ -78,71 +84,85 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
-
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         switch (viewType) {
+            case VIEW_TYPE_VOICE:
+                return new VoiceMessageViewHolder(
+                        inflater.inflate(R.layout.item_chat_voice, parent, false)
+                );
             case VIEW_TYPE_IMAGE:
-                return new ImageViewHolder(inflater.inflate(R.layout.item_chat_image, parent, false));
+                return new ImageViewHolder(
+                        inflater.inflate(R.layout.item_chat_image, parent, false)
+                );
             case VIEW_TYPE_VIDEO:
-                return new VideoViewHolder(inflater.inflate(R.layout.item_chat_video, parent, false));
+                return new VideoViewHolder(
+                        inflater.inflate(R.layout.item_chat_video, parent, false)
+                );
             case VIEW_TYPE_LOCATION:
-                return new LocationViewHolder(inflater.inflate(R.layout.item_chat_location, parent, false));
+                return new LocationViewHolder(
+                        inflater.inflate(R.layout.item_chat_location, parent, false)
+                );
             default:
-                return new TextViewHolder(inflater.inflate(R.layout.item_chat, parent, false));
+                return new TextViewHolder(
+                        inflater.inflate(R.layout.item_chat, parent, false)
+                );
         }
     }
-
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         ChatMessage message = messageList.get(position);
-        if (holder instanceof TextViewHolder) {
-            bindTextMessage((TextViewHolder) holder, message, position);
-        } else if (holder instanceof ImageViewHolder) {
-            bindImageMessage((ImageViewHolder) holder, message);
-        } else if (holder instanceof VideoViewHolder) {
-            bindVideoMessage((VideoViewHolder) holder, message);
-        } else if (holder instanceof LocationViewHolder) {
-            bindLocationMessage((LocationViewHolder) holder, message);
+        switch (holder.getClass().getSimpleName()) {
+            case "VoiceMessageViewHolder":
+                bindVoiceMessage((VoiceMessageViewHolder) holder, message);
+                break;
+            case "TextViewHolder":
+                bindTextMessage((TextViewHolder) holder, message, position);
+                break;
+            case "ImageViewHolder":
+                bindImageMessage((ImageViewHolder) holder, message);
+                break;
+            case "VideoViewHolder":
+                bindVideoMessage((VideoViewHolder) holder, message);
+                break;
+            case "LocationViewHolder":
+                bindLocationMessage((LocationViewHolder) holder, message);
+                break;
         }
     }
 
-    private void bindLocationMessage(LocationViewHolder holder, ChatMessage message) {
-        holder.tvLocation.setText("Xem vị trí");
-
+    private void bindVoiceMessage(VoiceMessageViewHolder holder, ChatMessage message) {
         holder.tvTime.setText(message.getTimeStamp());
         setMessageAlignment(holder.messageContainer, null, message.isSender());
 
-        holder.tvLocation.setOnClickListener(v -> {
-            String text = message.getContent();  // vẫn lấy content thật để parse
-            if (text.startsWith("location:")) {
-                String coords = text.substring("location:".length());
-                String[] parts = coords.split(",");
-                if (parts.length == 2) {
-                    try {
-                        double lat = Double.parseDouble(parts[0].trim());
-                        double lng = Double.parseDouble(parts[1].trim());
+        String voiceUrl = message.getMediaUrl();
 
-                        String uri = "geo:" + lat + "," + lng + "?q=" + lat + "," + lng + "(Vị trí được chia sẻ)";
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
-                        intent.setPackage("com.google.android.apps.maps");
-
-                        if (intent.resolveActivity(holder.itemView.getContext().getPackageManager()) != null) {
-                            holder.itemView.getContext().startActivity(intent);
-                        } else {
-                            Toast.makeText(holder.itemView.getContext(), "Không tìm thấy ứng dụng bản đồ", Toast.LENGTH_SHORT).show();
-                        }
-                    } catch (NumberFormatException e) {
-                        Toast.makeText(holder.itemView.getContext(), "Tọa độ không hợp lệ", Toast.LENGTH_SHORT).show();
-                    }
-                }
+        holder.ivPlayPause.setOnClickListener(v -> {
+            if (holder.isPlaying) {
+                holder.pauseVoice();
+            } else {
+                holder.playVoice(voiceUrl);
             }
         });
-    }
 
+        holder.seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    holder.seekTo(progress);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+    }
 
     private void bindTextMessage(TextViewHolder holder, ChatMessage message, int position) {
         if (searchQuery != null && !searchQuery.isEmpty()) {
@@ -167,32 +187,11 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         });
     }
 
-    static class LocationViewHolder extends RecyclerView.ViewHolder {
-        TextView tvLocation, tvTime;
-        LinearLayout messageContainer;
-
-        LocationViewHolder(@NonNull View view) {
-            super(view);
-            tvLocation = view.findViewById(R.id.tvLocation);
-            tvTime = view.findViewById(R.id.tvTime);
-            messageContainer = view.findViewById(R.id.messageContainer);
-        }
-    }
-
-    private SpannableString highlightSearchText(String text, String searchQuery) {
-        SpannableString spannable = new SpannableString(text);
-        Pattern pattern = Pattern.compile(Pattern.quote(searchQuery), Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(text);
-        while (matcher.find()) {
-            spannable.setSpan(new BackgroundColorSpan(Color.YELLOW),
-                    matcher.start(), matcher.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
-        return spannable;
-    }
-
     private void bindImageMessage(ImageViewHolder holder, ChatMessage message) {
         holder.progressBar.setVisibility(View.VISIBLE);
-        Glide.with(holder.itemView.getContext()).load(message.getContent()).into(holder.ivImage);
+        Glide.with(holder.itemView.getContext())
+                .load(message.getContent())
+                .into(holder.ivImage);
         holder.progressBar.setVisibility(View.GONE);
         holder.tvTime.setText(message.getTimeStamp());
         setMessageAlignment(holder.messageContainer, null, message.isSender());
@@ -227,9 +226,41 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         });
     }
 
-    private boolean isSameDay(Calendar c1, Calendar c2) {
-        return c1.get(Calendar.YEAR) == c2.get(Calendar.YEAR)
-                && c1.get(Calendar.DAY_OF_YEAR) == c2.get(Calendar.DAY_OF_YEAR);
+    private void bindLocationMessage(LocationViewHolder holder, ChatMessage message) {
+        holder.tvLocation.setText("Xem vị trí");
+        holder.tvTime.setText(message.getTimeStamp());
+        setMessageAlignment(holder.messageContainer, null, message.isSender());
+
+        holder.tvLocation.setOnClickListener(v -> {
+            double[] coordinates = message.getLocationCoordinates();
+            if (coordinates != null) {
+                double lat = coordinates[0];
+                double lng = coordinates[1];
+
+                String uri = "geo:" + lat + "," + lng + "?q=" + lat + "," + lng + "(Vị trí được chia sẻ)";
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
+                intent.setPackage("com.google.android.apps.maps");
+
+                if (intent.resolveActivity(holder.itemView.getContext().getPackageManager()) != null) {
+                    holder.itemView.getContext().startActivity(intent);
+                } else {
+                    Toast.makeText(holder.itemView.getContext(), "Không tìm thấy ứng dụng bản đồ", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(holder.itemView.getContext(), "Tọa độ không hợp lệ", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private SpannableString highlightSearchText(String text, String searchQuery) {
+        SpannableString spannable = new SpannableString(text);
+        Pattern pattern = Pattern.compile(Pattern.quote(searchQuery), Pattern.CASE_INSENSITIVE);
+        java.util.regex.Matcher matcher = pattern.matcher(text);
+        while (matcher.find()) {
+            spannable.setSpan(new BackgroundColorSpan(Color.YELLOW),
+                    matcher.start(), matcher.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        return spannable;
     }
 
     private void setMessageAlignment(LinearLayout container, TextView msg, boolean isSender) {
@@ -249,13 +280,18 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
         super.onViewRecycled(holder);
         if (holder instanceof VideoViewHolder) {
-            if (((VideoViewHolder) holder).player != null) {
-                ((VideoViewHolder) holder).player.release();
-                ((VideoViewHolder) holder).player = null;
+            VideoViewHolder videoHolder = (VideoViewHolder) holder;
+            if (videoHolder.player != null) {
+                videoHolder.player.release();
+                videoHolder.player = null;
             }
+        } else if (holder instanceof VoiceMessageViewHolder) {
+            VoiceMessageViewHolder voiceHolder = (VoiceMessageViewHolder) holder;
+            voiceHolder.release();
         }
     }
 
+    // ViewHolder Classes
     static class TextViewHolder extends RecyclerView.ViewHolder {
         TextView tvMessage, tvTime;
         LinearLayout messageContainer;
@@ -298,6 +334,144 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             tvTime = view.findViewById(R.id.tvTime);
             progressBar = view.findViewById(R.id.progressBar);
             messageContainer = view.findViewById(R.id.messageContainer);
+        }
+    }
+
+    static class LocationViewHolder extends RecyclerView.ViewHolder {
+        TextView tvLocation, tvTime;
+        LinearLayout messageContainer;
+
+        LocationViewHolder(@NonNull View view) {
+            super(view);
+            tvLocation = view.findViewById(R.id.tvLocation);
+            tvTime = view.findViewById(R.id.tvTime);
+            messageContainer = view.findViewById(R.id.messageContainer);
+        }
+    }
+
+    static class VoiceMessageViewHolder extends RecyclerView.ViewHolder {
+        ImageView ivPlayPause;
+        SeekBar seekBar;
+        TextView tvCurrentTime, tvDuration, tvTime;
+        LinearLayout messageContainer;
+
+        private MediaPlayer mediaPlayer;
+        boolean isPlaying = false;
+        private Handler progressUpdateHandler = new Handler(Looper.getMainLooper());
+        private Runnable progressUpdateRunnable;
+
+        VoiceMessageViewHolder(@NonNull View view) {
+            super(view);
+            ivPlayPause = view.findViewById(R.id.ivPlayPause);
+            seekBar = view.findViewById(R.id.seekBar);
+            tvCurrentTime = view.findViewById(R.id.tvCurrentTime);
+            tvDuration = view.findViewById(R.id.tvDuration);
+            tvTime = view.findViewById(R.id.tvTime);
+            messageContainer = view.findViewById(R.id.messageContainer);
+        }
+
+        void playVoice(String url) {
+            if (mediaPlayer == null) {
+                mediaPlayer = new MediaPlayer();
+                try {
+                    mediaPlayer.setDataSource(url);
+                    mediaPlayer.setOnPreparedListener(mp -> {
+                        mp.start();
+                        isPlaying = true;
+                        ivPlayPause.setImageResource(R.drawable.ic_pause);
+                        tvDuration.setText(formatTime(mp.getDuration()));
+                        startProgressUpdate();
+                    });
+                    mediaPlayer.setOnCompletionListener(mp -> stopPlayback());
+                    mediaPlayer.setOnErrorListener((mp, what, extra) -> {
+                        Log.e("VoicePlayer", "Error playing voice message: " + what + ", " + extra);
+                        Toast.makeText(itemView.getContext(), "Không thể phát tin nhắn thoại", Toast.LENGTH_SHORT).show();
+                        return true;
+                    });
+                    mediaPlayer.prepareAsync();
+                } catch (IOException e) {
+                    Log.e("VoicePlayer", "Error setting data source: " + e.getMessage());
+                    Toast.makeText(itemView.getContext(), "Không thể phát tin nhắn thoại", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                mediaPlayer.start();
+                isPlaying = true;
+                ivPlayPause.setImageResource(R.drawable.ic_pause);
+                startProgressUpdate();
+            }
+        }
+
+        void pauseVoice() {
+            if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+                mediaPlayer.pause();
+                isPlaying = false;
+                ivPlayPause.setImageResource(R.drawable.ic_play);
+                stopProgressUpdate();
+            }
+        }
+
+        void seekTo(int progress) {
+            if (mediaPlayer != null) {
+                int position = (mediaPlayer.getDuration() * progress) / 100;
+                mediaPlayer.seekTo(position);
+                tvCurrentTime.setText(formatTime(position));
+            }
+        }
+
+        private void startProgressUpdate() {
+            progressUpdateRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    if (mediaPlayer != null && isPlaying) {
+                        try {
+                            int position = mediaPlayer.getCurrentPosition();
+                            int duration = mediaPlayer.getDuration();
+                            int progress = (position * 100) / duration;
+                            seekBar.setProgress(progress);
+                            tvCurrentTime.setText(formatTime(position));
+                            progressUpdateHandler.postDelayed(this, 100);
+                        } catch (IllegalStateException e) {
+                            Log.e("VoicePlayer", "MediaPlayer in illegal state: " + e.getMessage());
+                        }
+                    }
+                }
+            };
+            progressUpdateHandler.post(progressUpdateRunnable);
+        }
+
+        private void stopProgressUpdate() {
+            if (progressUpdateRunnable != null) {
+                progressUpdateHandler.removeCallbacks(progressUpdateRunnable);
+            }
+        }
+
+        private void stopPlayback() {
+            isPlaying = false;
+            ivPlayPause.setImageResource(R.drawable.ic_play);
+            seekBar.setProgress(0);
+            tvCurrentTime.setText("0:00");
+            stopProgressUpdate();
+        }
+
+        void release() {
+            if (mediaPlayer != null) {
+                try {
+                    if (mediaPlayer.isPlaying()) {
+                        mediaPlayer.stop();
+                    }
+                    mediaPlayer.release();
+                } catch (IllegalStateException e) {
+                    Log.e("VoicePlayer", "Error releasing MediaPlayer: " + e.getMessage());
+                }
+                mediaPlayer = null;
+            }
+            stopProgressUpdate();
+        }
+
+        private String formatTime(int milliseconds) {
+            int seconds = (milliseconds / 1000) % 60;
+            int minutes = (milliseconds / (1000 * 60)) % 60;
+            return String.format(Locale.getDefault(), "%d:%02d", minutes, seconds);
         }
     }
 }
