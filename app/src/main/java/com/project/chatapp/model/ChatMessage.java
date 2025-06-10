@@ -11,6 +11,7 @@ public class ChatMessage {
         VOICE
     }
 
+
     private String id;
     private String fromId;
     private String toId;
@@ -18,6 +19,22 @@ public class ChatMessage {
     private String timeStamp;
     private boolean isSender;
     private MessageType messageType;
+    @PropertyName("type")
+    public void setType(String type) {
+        try {
+            this.messageType = MessageType.valueOf(type.toUpperCase());
+        } catch (Exception e) {
+            this.messageType = MessageType.TEXT;
+        }
+    }
+
+    @PropertyName("type")
+    public String getType() {
+        return messageType.name().toLowerCase();
+    }
+    public ChatMessage() {
+
+    }
 
     @PropertyName("type")
     public void setType(String type) {
@@ -203,5 +220,4 @@ public class ChatMessage {
         }
         return null;
     }
-
 }

@@ -13,38 +13,66 @@
         android:layout_height="wrap_content"
         android:background="#FFFFFF"
         android:elevation="2dp"
+        android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="8dp"
-        android:gravity="center_vertical">
+        android:padding="12dp"
+        tools:ignore="UseCompoundDrawables">
 
-        <!-- Back button -->
         <ImageView
             android:id="@+id/back_chat"
-            android:layout_width="40dp"
+            android:layout_width="wrap_content"
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/backbutton"
             android:padding="8dp"
             android:src="@drawable/back" />
 
-        <!-- Username -->
         <TextView
             android:id="@+id/chatter"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="place holder"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:text="placeHolder"
             android:textColor="#000000"
             android:textSize="18sp"
             android:textStyle="bold" />
 
-        <!-- Space to push icons to the right -->
         <View
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_weight="1" />
 
-        <!-- Search -->
+        <ImageView
+            android:id="@+id/call"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="20dp"
+            android:contentDescription="@string/backbutton"
+            android:src="@drawable/call" />
+
+        <ImageView
+            android:id="@+id/videoCall"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="20dp"
+            android:contentDescription="@string/backbutton"
+            android:src="@drawable/video_call" />
+
+        <ImageView
+            android:id="@+id/infooo"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:contentDescription="@string/backbutton"
+            android:src="@drawable/burger" />
+
         <ImageView
             android:id="@+id/btnSearch"
             android:layout_width="40dp"
@@ -53,36 +81,6 @@
             android:contentDescription="Search"
             android:padding="8dp"
             android:src="@drawable/search" />
-
-        <!-- Call -->
-        <ImageView
-            android:id="@+id/call"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Call"
-            android:padding="8dp"
-            android:src="@drawable/call" />
-
-        <!-- Video Call -->
-        <ImageView
-            android:id="@+id/videoCall"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="VideoCall"
-            android:padding="8dp"
-            android:src="@drawable/video_call" />
-
-        <!-- Menu -->
-        <ImageView
-            android:id="@+id/menu"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Menu"
-            android:padding="8dp"
-            android:src="@drawable/burger" />
 
     </LinearLayout>
 
@@ -187,138 +185,56 @@
         android:padding="10dp"
         android:scrollbars="vertical" />
 
-    <!-- Container cho input và recording state -->
-    <FrameLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="#FFFFFF"
+        android:elevation="4dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="12dp">
 
-        <!-- Input Container (Normal State) -->
-        <LinearLayout
-            android:id="@+id/inputContainer"
-            android:layout_width="match_parent"
+        <ImageView
+            android:id="@+id/btnAdd"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Add"
+            android:padding="8dp"
+            android:src="@drawable/plus" />
+
+        <ImageView
+            android:id="@+id/btnSendImg"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:layout_marginEnd="16dp"
+            android:contentDescription="Send Image"
+            android:src="@drawable/send_img"
+            app:tint="#1E88E5" />
+
+        <EditText
+            android:id="@+id/etMessage"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:background="#FFFFFF"
-            android:elevation="4dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="12dp">
-
-            <ImageView
-                android:id="@+id/btnAdd"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Add"
-                android:padding="8dp"
-                android:src="@drawable/plus" />
-
-            <ImageView
-                android:id="@+id/btnSendImg"
-                android:layout_width="26dp"
-                android:layout_height="26dp"
-                android:layout_marginEnd="16dp"
-                android:contentDescription="Send Image"
-                android:src="@drawable/send_img"
-                app:tint="#1E88E5" />
-
-            <ImageView
-                android:id="@+id/btnVoice"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginEnd="8dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Voice Message"
-                android:padding="8dp"
-                android:src="@drawable/voice"
-                android:visibility="visible" />
-
-            <EditText
-                android:id="@+id/etMessage"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="8dp"
-                android:layout_weight="1"
-                android:background="@drawable/edittext_bg"
-                android:hint="Type a message..."
-                android:inputType="textMultiLine|textCapSentences"
-                android:maxLines="4"
-                android:padding="12dp"
-                android:textSize="16sp" />
-
-            <ImageView
-                android:id="@+id/btnSend"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Send"
-                android:padding="8dp"
-                android:src="@drawable/send"
-                android:visibility="gone" />
-
-        </LinearLayout>
-
-        <!-- Recording State View -->
-        <LinearLayout
-            android:id="@+id/recordingStateView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="#FFFFFF"
-            android:elevation="4dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/edittext_bg"
+            android:hint="Type a message..."
+            android:inputType="textMultiLine|textCapSentences"
+            android:maxLines="4"
             android:padding="12dp"
-            android:visibility="gone">
+            android:textSize="16sp" />
 
-            <!-- Recording Icon with Animation -->
-            <ImageView
-                android:id="@+id/ivRecordingIcon"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_recording"
-                android:contentDescription="Recording" />
+        <ImageView
+            android:id="@+id/btnSend"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Send"
+            android:padding="8dp"
+            android:src="@drawable/send" />
 
-            <!-- Recording Timer -->
-            <TextView
-                android:id="@+id/tvRecordingTimer"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="16dp"
-                android:text="00:00"
-                android:textSize="18sp"
-                android:textColor="#E53935"
-                android:textStyle="bold" />
-
-            <!-- Cancel Recording Button -->
-            <TextView
-                android:id="@+id/btnCancelRecording"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Hủy"
-                android:textColor="#E53935"
-                android:textSize="16sp"
-                android:padding="12dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true" />
-
-            <!-- Send Recording Button -->
-            <TextView
-                android:id="@+id/btnSendRecording"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Gửi"
-                android:textColor="#4CAF50"
-                android:textSize="16sp"
-                android:padding="12dp"
-                android:layout_marginStart="16dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true" />
-
-        </LinearLayout>
-
-    </FrameLayout>
+    </LinearLayout>
 
 </LinearLayout>
