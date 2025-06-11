@@ -6,10 +6,11 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.AnimatedVectorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Environment;
-import android.os.SystemClock;
 import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -25,13 +26,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.activity.EdgeToEdge;
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -39,7 +33,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -56,22 +49,27 @@ import com.project.chatapp.model.CallModel;
 import com.project.chatapp.screen.location.PickLocationActivity;
 import com.project.chatapp.utils.ChatUitls;
 import com.project.chatapp.utils.CloudinaryHelper;
-import com.project.chatapp.utils.TimeUtils;
+import com.project.chatapp.utils.VoiceMessageManager;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 public class MessageActivity extends AppCompatActivity {
     private static final int PICK_IMAGE_VIDEO_REQUEST = 102;
-
+    private static final int RECORD_PERMISSION_CODE = 1001;
+    private ImageView btnVoice;
+    private LinearLayout inputContainer, recordingStateView;
+    private TextView tvRecordingTimer, btnCancelRecording, btnSendRecording;
+    private ImageView ivRecordingIcon;
+    private VoiceMessageManager voiceMessageManager;
+    private CountDownTimer recordingTimer;
+    private final long recordingMinimumDuration = 1000L;
     // UI Components
     private RecyclerView recyclerView;
     private EditText etMessage, etSearchInput;
@@ -120,6 +118,7 @@ public class MessageActivity extends AppCompatActivity {
         setupFirebase();
         setupEventListeners();
         setupPermissionLaunchers();
+        setupVoiceMessage();
         repo.getCurrentUserId(myUserId -> {
             if (myUserId != null) {
                 mDatabase.child("users").child(myUserId).child("chats").child(toUserId)
@@ -149,6 +148,14 @@ public class MessageActivity extends AppCompatActivity {
         progressDialog = new ProgressDialog(this);
         searchResults = new ArrayList<>();
         searchPositions = new ArrayList<>();
+        btnVoice = findViewById(R.id.btnVoice);
+        inputContainer = findViewById(R.id.inputContainer);
+        recordingStateView = findViewById(R.id.recordingStateView);
+        tvRecordingTimer = findViewById(R.id.tvRecordingTimer);
+        btnCancelRecording = findViewById(R.id.btnCancelRecording);
+        btnSendRecording = findViewById(R.id.btnSendRecording);
+        ivRecordingIcon = findViewById(R.id.ivRecordingIcon);
+
     }
 
     private void setupRecyclerView() {
@@ -158,6 +165,24 @@ public class MessageActivity extends AppCompatActivity {
     }
 
     private void setupEventListeners() {
+        etMessage.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s != null && s.length() > 0) {
+                    btnSend.setVisibility(View.VISIBLE);
+                    btnVoice.setVisibility(View.GONE);
+                } else {
+                    btnSend.setVisibility(View.GONE);
+                    btnVoice.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
         btnSend.setOnClickListener(v -> sendMessage());
 
 //// Thêm tên ở placeHolder
@@ -259,7 +284,6 @@ public class MessageActivity extends AppCompatActivity {
 
         });
         progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage("Uploading media...");
         progressDialog.setCancelable(false);
         setupPermissionLaunchers();
         TextView chatter = findViewById(R.id.chatter);
@@ -358,6 +382,7 @@ public class MessageActivity extends AppCompatActivity {
             }
         });
     }
+
 
     private void sendMediaMessage(String mediaUrl) {
         Log.d("MessageActivity", "Sending media message: " + mediaUrl);
@@ -697,6 +722,10 @@ public class MessageActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (voiceMessageManager != null) {
+            voiceMessageManager.release();
+        }
+        stopRecordingTimer();
         if (pendingMediaUri != null) {
             revokeUriPermission(pendingMediaUri,
                     Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -735,4 +764,169 @@ public class MessageActivity extends AppCompatActivity {
     public interface ChannelNameCallback {
         void onChannelNameBuilt(String channelName);
     }
+    // Thêm các phương thức này vào cuối class, trước dấu } cuối cùng
+    private void setupVoiceMessage() {
+        voiceMessageManager = new VoiceMessageManager(this);
+
+        voiceMessageManager.setOnRecordingStateChangeListener(isRecording -> {
+            runOnUiThread(() -> updateRecordingUI(isRecording));
+        });
+
+        btnVoice.setOnClickListener(v -> {
+            if (checkRecordPermission()) {
+                startRecording();
+            } else {
+                requestRecordPermission();
+            }
+        });
+
+        btnCancelRecording.setOnClickListener(v -> cancelRecording());
+        btnSendRecording.setOnClickListener(v -> stopRecording());
+    }
+
+    private boolean checkRecordPermission() {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) ==
+                PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestRecordPermission() {
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.RECORD_AUDIO},
+                RECORD_PERMISSION_CODE);
+    }
+
+    private void startRecording() {
+        if (voiceMessageManager.isRecording()) return;
+
+        voiceMessageManager.startRecording();
+        showRecordingUI();
+        startRecordingTimer();
+    }
+
+    private void stopRecording() {
+        long recordingDuration = voiceMessageManager.getRecordingDuration();
+        if (recordingDuration < recordingMinimumDuration) {
+            Toast.makeText(this, "Tin nhắn thoại quá ngắn", Toast.LENGTH_SHORT).show();
+            cancelRecording();
+            return;
+        }
+
+        File recordingFile = voiceMessageManager.stopRecording();
+        hideRecordingUI();
+
+        if (recordingFile != null && recordingFile.exists() && recordingFile.length() > 0) {
+            uploadVoiceMessage(recordingFile);
+        } else {
+            Toast.makeText(this, "Lỗi: File ghi âm không hợp lệ", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void cancelRecording() {
+        voiceMessageManager.cancelRecording();
+        hideRecordingUI();
+    }
+
+    private void showRecordingUI() {
+        inputContainer.setVisibility(View.GONE);
+        recordingStateView.setVisibility(View.VISIBLE);
+
+        if (ivRecordingIcon.getDrawable() instanceof AnimatedVectorDrawable) {
+            ((AnimatedVectorDrawable) ivRecordingIcon.getDrawable()).start();
+        }
+    }
+
+    private void hideRecordingUI() {
+        inputContainer.setVisibility(View.VISIBLE);
+        recordingStateView.setVisibility(View.GONE);
+        stopRecordingTimer();
+    }
+
+    private void startRecordingTimer() {
+        recordingTimer = new CountDownTimer(Long.MAX_VALUE, 1000) {
+            int seconds = 0;
+
+            @Override
+            public void onTick(long millisUntilFinished) {
+                seconds++;
+                int minutes = seconds / 60;
+                int remainingSeconds = seconds % 60;
+                tvRecordingTimer.setText(String.format(Locale.getDefault(), "%02d:%02d", minutes, remainingSeconds));
+            }
+
+            @Override
+            public void onFinish() {}
+        };
+        recordingTimer.start();
+    }
+
+    private void stopRecordingTimer() {
+        if (recordingTimer != null) {
+            recordingTimer.cancel();
+            recordingTimer = null;
+        }
+    }
+
+    private void updateRecordingUI(boolean isRecording) {
+        if (isRecording) {
+            showRecordingUI();
+        } else {
+            hideRecordingUI();
+        }
+    }
+    private void uploadVoiceMessage(File file) {
+        if (!file.exists()) return;
+        // progressDialog.show();
+
+        CloudinaryHelper.uploadMedia(this, file.getAbsolutePath(), new CloudinaryHelper.UploadCallback() {
+            @Override
+            public void onSuccess(String url) {
+                runOnUiThread(() -> {
+                    // progressDialog.dismiss();
+                    if (url != null && !url.isEmpty()) {
+                        sendVoiceMessage(url);
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                runOnUiThread(() -> {
+                    // progressDialog.dismiss();
+                });
+            }
+        });
+    }
+
+
+    private void sendVoiceMessage(String url) {
+        repo.getCurrentUserId(fromUserId -> {
+            if (fromUserId == null || fromUserId.isEmpty()) {
+                Toast.makeText(this, "Lỗi: Không lấy được ID người dùng", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String voiceMessage = "voice:" + url;
+            repo.sendMessage(fromUserId, toUserId, voiceMessage);
+        });
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == RECORD_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Đã được cấp quyền ghi âm", Toast.LENGTH_SHORT).show();
+                startRecording();
+            } else {
+                Toast.makeText(this, "Cần quyền ghi âm để sử dụng tính năng này", Toast.LENGTH_SHORT).show();
+            }
+        } else if (requestCode == STORAGE_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                openImageVideoPicker();
+            } else {
+                Toast.makeText(this, "Cần quyền truy cập bộ nhớ để chọn file", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
 }
