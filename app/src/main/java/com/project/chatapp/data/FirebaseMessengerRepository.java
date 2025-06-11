@@ -413,6 +413,29 @@ public class FirebaseMessengerRepository {
             });
         });
     }
+    public void deleteMessageForMe(String chatId, String messageId, String userId, DeleteMessageCallback callback) {
+        DatabaseReference messageRef = mDatabase.child("messages")
+                .child(chatId)
+                .child(messageId);
 
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("deletedFor/" + userId, true);
 
+        messageRef.updateChildren(updates)
+                .addOnSuccessListener(aVoid -> {
+                    if (callback != null) {
+                        callback.onSuccess();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (callback != null) {
+                        callback.onError(e.getMessage());
+                    }
+                });
+    }
+
+    public interface DeleteMessageCallback {
+        void onSuccess();
+        void onError(String error);
+    }
 }

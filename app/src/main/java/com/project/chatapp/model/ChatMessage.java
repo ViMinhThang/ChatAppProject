@@ -18,6 +18,15 @@ public class ChatMessage {
     private String timeStamp;
     private boolean isSender;
     private MessageType messageType;
+    private boolean deletedForMe;
+
+    public boolean isDeletedForMe() {
+        return deletedForMe;
+    }
+
+    public void setDeletedForMe(boolean deletedForMe) {
+        this.deletedForMe = deletedForMe;
+    }
 
     @PropertyName("type")
     public void setType(String type) {

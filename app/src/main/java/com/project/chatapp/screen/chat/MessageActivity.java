@@ -157,13 +157,12 @@ public class MessageActivity extends AppCompatActivity {
         ivRecordingIcon = findViewById(R.id.ivRecordingIcon);
 
     }
-
     private void setupRecyclerView() {
         chatApdater = new ChatApdater(messageList, this::onMessageClick);
+        chatApdater.setOnDeleteMessageListener(this::handleDeleteMessage);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(chatApdater);
     }
-
     private void setupEventListeners() {
         etMessage.addTextChangedListener(new TextWatcher() {
             @Override
@@ -928,5 +927,31 @@ public class MessageActivity extends AppCompatActivity {
             }
         }
     }
+    private void handleDeleteMessage(ChatMessage message, int position) {
+        repo.getCurrentUserId(currentUserId -> {
+            if (currentUserId == null) return;
 
+            String chatId = currentUserId.compareTo(toUserId) < 0 ?
+                    currentUserId + "_" + toUserId :
+                    toUserId + "_" + currentUserId;
+
+            repo.deleteMessageForMe(chatId, message.getId(), currentUserId, new FirebaseMessengerRepository.DeleteMessageCallback() {
+                @Override
+                public void onSuccess() {
+                    runOnUiThread(() -> {
+                        message.setDeletedForMe(true);
+                        chatApdater.notifyItemChanged(position);
+                        Toast.makeText(MessageActivity.this, "Đã xóa tin nhắn", Toast.LENGTH_SHORT).show();
+                    });
+                }
+
+                @Override
+                public void onError(String error) {
+                    runOnUiThread(() -> {
+                        Toast.makeText(MessageActivity.this, "Không thể xóa tin nhắn: " + error, Toast.LENGTH_SHORT).show();
+                    });
+                }
+            });
+        });
+    }
 }

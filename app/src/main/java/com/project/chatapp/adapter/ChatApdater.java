@@ -3,6 +3,7 @@ package com.project.chatapp.adapter;
 import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Handler;
@@ -21,7 +22,9 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import android.app.AlertDialog;
+import android.content.Context;
+import android.widget.PopupMenu;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -115,6 +118,35 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         ChatMessage message = messageList.get(position);
+
+        // Thêm long press listener cho tất cả các loại tin nhắn
+        holder.itemView.setOnLongClickListener(v -> {
+            if (!message.isDeletedForMe()) {
+                showDeleteDialog(holder.itemView, message, position);
+            }
+            return true;
+        });
+
+        // Kiểm tra nếu tin nhắn đã bị xóa
+        if (message.isDeletedForMe()) {
+            switch (holder.getItemViewType()) {
+                case VIEW_TYPE_TEXT:
+                    TextViewHolder textHolder = (TextViewHolder) holder;
+                    textHolder.tvMessage.setText("Tin nhắn đã bị xóa");
+                    textHolder.tvMessage.setTextColor(Color.GRAY);
+                    textHolder.tvMessage.setTypeface(null, Typeface.ITALIC);
+                    break;
+                case VIEW_TYPE_IMAGE:
+                case VIEW_TYPE_VIDEO:
+                case VIEW_TYPE_VOICE:
+                case VIEW_TYPE_LOCATION:
+                    hideMediaContent(holder);
+                    break;
+            }
+            return;
+        }
+
+        // Xử lý tin nhắn bình thường
         switch (holder.getClass().getSimpleName()) {
             case "VoiceMessageViewHolder":
                 bindVoiceMessage((VoiceMessageViewHolder) holder, message);
@@ -134,6 +166,70 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
+    private void showDeleteDialog(View anchorView, ChatMessage message, int position) {
+        Context context = anchorView.getContext();
+        PopupMenu popup = new PopupMenu(context, anchorView);
+        popup.getMenu().add("Xóa tin nhắn");
+        popup.setOnMenuItemClickListener(item -> {
+            if (item.getTitle().equals("Xóa tin nhắn")) {
+                new AlertDialog.Builder(context)
+                        .setTitle("Xóa tin nhắn")
+                        .setMessage("Bạn có chắc chắn muốn xóa tin nhắn này?")
+                        .setPositiveButton("Xóa", (dialog, which) -> {
+                            if (deleteListener != null) {
+                                deleteListener.onDeleteMessage(message, position);
+                            }
+                        })
+                        .setNegativeButton("Hủy", null)
+                        .show();
+                return true;
+            }
+            return false;
+        });
+        popup.show();
+    }
+
+    private void hideMediaContent(RecyclerView.ViewHolder holder) {
+        TextView deletedText = new TextView(holder.itemView.getContext());
+        deletedText.setText("Tin nhắn đã bị xóa");
+        deletedText.setTextColor(Color.GRAY);
+        deletedText.setTypeface(null, Typeface.ITALIC);
+
+        switch (holder.getItemViewType()) {
+            case VIEW_TYPE_IMAGE:
+                ImageViewHolder imageHolder = (ImageViewHolder) holder;
+                imageHolder.ivImage.setVisibility(View.GONE);
+                ((ViewGroup) imageHolder.ivImage.getParent()).addView(deletedText);
+                break;
+            case VIEW_TYPE_VIDEO:
+                VideoViewHolder videoHolder = (VideoViewHolder) holder;
+                videoHolder.playerView.setVisibility(View.GONE);
+                ((ViewGroup) videoHolder.playerView.getParent()).addView(deletedText);
+                break;
+            case VIEW_TYPE_VOICE:
+                VoiceMessageViewHolder voiceHolder = (VoiceMessageViewHolder) holder;
+                voiceHolder.waveContainer.setVisibility(View.GONE);
+                ((ViewGroup) voiceHolder.waveContainer.getParent()).addView(deletedText);
+                break;
+            case VIEW_TYPE_LOCATION:
+                LocationViewHolder locationHolder = (LocationViewHolder) holder;
+                locationHolder.tvLocation.setText("Tin nhắn đã bị xóa");
+                locationHolder.tvLocation.setEnabled(false);
+                locationHolder.tvLocation.setTextColor(Color.GRAY);
+                locationHolder.tvLocation.setTypeface(null, Typeface.ITALIC);
+                break;
+        }
+    }
+
+    public interface OnDeleteMessageListener {
+        void onDeleteMessage(ChatMessage message, int position);
+    }
+
+    private OnDeleteMessageListener deleteListener;
+
+    public void setOnDeleteMessageListener(OnDeleteMessageListener listener) {
+        this.deleteListener = listener;
+    }
     private void bindVoiceMessage(VoiceMessageViewHolder holder, ChatMessage message) {
         holder.tvTime.setText(message.getTimeStamp());
         setMessageAlignment(holder.messageContainer, null, message.isSender());
@@ -463,4 +559,5 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             return String.format(Locale.getDefault(), "%d:%02d", minutes, seconds);
         }
     }
+
 }
