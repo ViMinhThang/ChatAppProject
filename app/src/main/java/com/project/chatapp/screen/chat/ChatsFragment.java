@@ -59,7 +59,7 @@ public class ChatsFragment extends Fragment {
             binding.rvChats.setAdapter(adapterChat);
             adapterChat.setOnChatClickListener(userId2 -> {
                 Intent intent = new Intent(getContext(), MessageActivity.class);
-                intent.putExtra("userId", userId2);
+                intent.putExtra("toUserId", userId2);
                 startActivity(intent);
             });
             repo.loadUserChats(

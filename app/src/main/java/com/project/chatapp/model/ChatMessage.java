@@ -49,13 +49,19 @@ public class ChatMessage {
 
         String lowerContent = content.toLowerCase();
 
+        // Check for voice messages first
+        if (lowerContent.startsWith("voice://")) {
+            return MessageType.TEXT; // Treat voice messages as text for now
+        }
+
+        // Check for Cloudinary URLs
         if (lowerContent.contains("cloudinary.com")) {
             if (lowerContent.contains("/video/")) {
                 return MessageType.VIDEO;
             } else if (lowerContent.contains("/image/")) {
                 return MessageType.IMAGE;
             }
-        } else if (lowerContent.contains("location")) {
+        } else if (lowerContent.startsWith("location:")) {
             return MessageType.LOCATION;
         }
 

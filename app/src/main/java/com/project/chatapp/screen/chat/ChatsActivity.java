@@ -21,6 +21,7 @@ import com.project.chatapp.services.NotificationService;
 import com.project.chatapp.R;
 import com.project.chatapp.data.FirebaseMessengerRepository;
 import com.project.chatapp.screen.contact.ContactFragment;
+import com.project.chatapp.model.CallModel;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,6 +35,7 @@ public class ChatsActivity extends AppCompatActivity {
     private Map<String, String> chatNames = new HashMap<>();
     private static final String CHANNEL_ID = "ChatAppNotifications";
     private int notificationId = 0;
+    private static final String TAG = "ChatsActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +45,9 @@ public class ChatsActivity extends AppCompatActivity {
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
         mDatabase = FirebaseDatabase.getInstance().getReference();
         repo = new FirebaseMessengerRepository();
+
+        // Set tab mặc định là Chats
+        bottomNavigationView.setSelectedItemId(R.id.nav_chats);
 
         if (savedInstanceState == null) {
             getSupportFragmentManager()
@@ -99,16 +104,16 @@ public class ChatsActivity extends AppCompatActivity {
                 startService(serviceIntent);
             }
 
-            Log.d("ChatsActivity", "NotificationService started");
+            Log.d(TAG, "NotificationService started");
         } catch (Exception e) {
-            Log.e("ChatsActivity", "Failed to start NotificationService", e);
+            Log.e(TAG, "Failed to start NotificationService", e);
         }
     }
 
     private void loadChatNames() {
         repo.getCurrentUserId(userId -> {
             if (userId == null) {
-                Log.e("ChatsActivity", "Cannot load chat names - user ID is null");
+                Log.e(TAG, "Cannot load chat names - user ID is null");
                 return;
             }
 
@@ -131,7 +136,7 @@ public class ChatsActivity extends AppCompatActivity {
 
                                         @Override
                                         public void onCancelled(@NonNull DatabaseError error) {
-                                            Log.e("ChatsActivity", "Failed to load user name: " + error.getMessage());
+                                            Log.e(TAG, "Failed to load user name: " + error.getMessage());
                                         }
                                     });
 
@@ -146,34 +151,53 @@ public class ChatsActivity extends AppCompatActivity {
 
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
-                    Log.e("ChatsActivity", "Failed to load chats: " + error.getMessage());
+                    Log.e(TAG, "Failed to load chats: " + error.getMessage());
                 }
             });
         });
     }
 
     private void listenForIncomingCall() {
-        FirebaseMessengerRepository repo = new FirebaseMessengerRepository();
         repo.getCurrentUserId(myUserId -> {
-            if (myUserId == null) return;
+            if (myUserId == null) {
+                Log.e(TAG, "Cannot listen for calls - user ID is null");
+                return;
+            }
+
             DatabaseReference callRef = FirebaseDatabase.getInstance().getReference()
                     .child("calls").child(myUserId);
+
             callRef.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot snapshot) {
-                    if (snapshot.exists()) {
-                        com.project.chatapp.model.CallModel call = snapshot.getValue(com.project.chatapp.model.CallModel.class);
-                        if (call != null && "audio".equals(call.type) && !call.from.equals(myUserId)) {
-                            Intent intent = new Intent(ChatsActivity.this, IncomingCallActivity.class);
-                            intent.putExtra("callerName", call.callerName);
-                            intent.putExtra("channelName", call.channelName);
-                            intent.putExtra("fromUserId", call.from);
-                            startActivity(intent);
+                    try {
+                        if (snapshot.exists()) {
+                            CallModel call = snapshot.getValue(CallModel.class);
+                            if (call != null) {
+                                String callType = call.getType();
+                                String callerId = call.getCallerId();
+                                String callerName = call.getCallerName();
+                                String callId = call.getCallId();
+
+                                if (callType != null && callerId != null && callerName != null && callId != null && !callerId.equals(myUserId)) {
+                                    Intent intent = new Intent(ChatsActivity.this, IncomingCallActivity.class);
+                                    intent.putExtra("callerName", callerName);
+                                    intent.putExtra("callId", callId);
+                                    intent.putExtra("callerId", callerId);
+                                    intent.putExtra("type", callType);
+                                    startActivity(intent);
+                                }
+                            }
                         }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error processing incoming call data", e);
                     }
                 }
+
                 @Override
-                public void onCancelled(DatabaseError error) {}
+                public void onCancelled(DatabaseError error) {
+                    Log.e(TAG, "Call listener cancelled: " + error.getMessage());
+                }
             });
         });
     }
@@ -199,7 +223,7 @@ public class ChatsActivity extends AppCompatActivity {
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-                        Log.e("ChatsActivity", "Failed to reset unread counts: " + error.getMessage());
+                        Log.e(TAG, "Failed to reset unread counts: " + error.getMessage());
                     }
                 });
             }

@@ -7,12 +7,6 @@ android {
     buildFeatures {
         viewBinding = true
     }
-    buildscript {
-        repositories {
-            google()
-            mavenCentral()
-        }
-    }
 
     namespace 'com.project.chatapp'
     compileSdk 35
@@ -41,7 +35,6 @@ android {
 
 dependencies {
     implementation 'com.google.firebase:firebase-messaging:23.0.0'
-    implementation 'io.agora.rtc:full-sdk:4.2.2'
     implementation 'com.google.android.gms:play-services-maps:18.2.0'
     implementation 'com.google.android.libraries.places:places:3.3.0'
     implementation 'com.google.firebase:firebase-database'
@@ -68,4 +61,5 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.9'
     implementation 'com.github.bumptech.glide:glide:4.15.1'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.15.1'
+    implementation("io.getstream:stream-webrtc-android:1.3.8")
 }

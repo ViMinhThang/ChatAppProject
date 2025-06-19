@@ -145,10 +145,16 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
 
     private void bindTextMessage(TextViewHolder holder, ChatMessage message, int position) {
-        if (searchQuery != null && !searchQuery.isEmpty()) {
-            holder.tvMessage.setText(highlightSearchText(message.getContent(), searchQuery));
+        String content = message.getContent();
+        if (content != null && content.startsWith("voice://")) {
+            holder.tvMessage.setText("🎤 Tin nhắn thoại");
+            holder.tvMessage.setOnClickListener(v -> {
+                Toast.makeText(v.getContext(), "Tính năng tin nhắn thoại đang được phát triển", Toast.LENGTH_SHORT).show();
+            });
+        } else if (searchQuery != null && !searchQuery.isEmpty()) {
+            holder.tvMessage.setText(highlightSearchText(content, searchQuery));
         } else {
-            holder.tvMessage.setText(message.getContent());
+            holder.tvMessage.setText(content);
         }
 
         holder.tvTime.setText(message.getTimeStamp());
@@ -207,6 +213,18 @@ public class ChatApdater extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private void bindVideoMessage(VideoViewHolder holder, ChatMessage message) {
         holder.progressBar.setVisibility(View.VISIBLE);
         if (holder.player != null) holder.player.release();
+
+        if (message.getContent() != null && message.getContent().startsWith("voice://")) {
+            holder.playerView.setVisibility(View.GONE);
+            holder.ivPlayButton.setVisibility(View.GONE);
+            holder.tvTime.setText(message.getTimeStamp());
+            setMessageAlignment(holder.messageContainer, null, message.isSender());
+            holder.itemView.setOnClickListener(v -> {
+                Toast.makeText(holder.itemView.getContext(), "Tính năng tin nhắn thoại đang được phát triển", Toast.LENGTH_SHORT).show();
+            });
+            holder.progressBar.setVisibility(View.GONE);
+            return;
+        }
 
         holder.player = new ExoPlayer.Builder(holder.itemView.getContext()).build();
         holder.playerView.setPlayer(holder.player);

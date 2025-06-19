@@ -96,8 +96,20 @@ public class ChatsRepository {
                         String chatId = chatSnapshot.getKey();
                         if (chatId == null || chatId.startsWith("group")) continue;
 
-                        String lastMessage = chatSnapshot.child("last_content").getValue(String.class).toString();
-                        String lastMessageTime = chatSnapshot.child("last_content_time").getValue(String.class);
+                        final String lastMessage;
+                        if (chatSnapshot.child("last_content").exists()) {
+                            String tmp = chatSnapshot.child("last_content").getValue(String.class);
+                            lastMessage = (tmp != null) ? tmp : "";
+                        } else {
+                            lastMessage = "";
+                        }
+                        final String lastMessageTime;
+                        if (chatSnapshot.child("last_content_time").exists()) {
+                            String tmpTime = chatSnapshot.child("last_content_time").getValue(String.class);
+                            lastMessageTime = (tmpTime != null) ? tmpTime : "";
+                        } else {
+                            lastMessageTime = "";
+                        }
                         Long value = chatSnapshot.child("unread").getValue(Long.class);
                         long unreadCount = (value != null) ? value.longValue() : 0L;
 

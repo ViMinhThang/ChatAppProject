@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -12,6 +13,11 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.project.chatapp.R;
 import com.project.chatapp.adapter.OptionAdapter;
 import com.project.chatapp.databinding.FragmentMoreBinding;
@@ -37,6 +43,31 @@ public class MoreFragment extends Fragment {
     public void onViewCreated(@NonNull View view,
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        // Lấy userId hiện tại
+        String userId = FirebaseAuth.getInstance().getCurrentUser() != null ?
+                FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
+        Log.d("MORE_FRAGMENT", "Current userId: " + userId);
+        final android.widget.TextView tvUsername = binding.getRoot().findViewById(R.id.textViewUsername);
+        final android.widget.TextView tvPhone = binding.getRoot().findViewById(R.id.textViewPhone);
+        if (userId != null) {
+            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
+            userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    Log.d("MORE_FRAGMENT", "User snapshot: " + snapshot);
+                    String name = snapshot.child("name").getValue(String.class);
+                    String phone = snapshot.child("phone").getValue(String.class);
+                    Log.d("MORE_FRAGMENT", "name=" + name + ", phone=" + phone);
+                    if (name != null) tvUsername.setText(name);
+                    if (phone != null) tvPhone.setText(phone);
+                }
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    Log.e("MORE_FRAGMENT", "Firebase error: " + error.getMessage());
+                }
+            });
+        }
 
         // Cài đặt RecyclerView
         List<OptionModel> optionList = getOptionList();

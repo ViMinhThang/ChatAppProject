@@ -1,226 +1,361 @@
 package com.project.chatapp.screen.chat;
 
 import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
+import android.widget.ImageButton;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.content.Intent;
 import android.os.Handler;
 import android.os.SystemClock;
-import android.util.Log;
-import com.project.chatapp.R;
+import android.widget.ImageView;
 
-import io.agora.rtc2.*;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
+import com.project.chatapp.R;
+import com.project.chatapp.utils.WebRTCClient;
+import com.project.chatapp.utils.SignalingClient;
+
+import org.webrtc.IceCandidate;
+import org.webrtc.PeerConnection;
+import org.webrtc.SessionDescription;
+import org.webrtc.VideoTrack;
+import android.util.Log;
+
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 public class AudioCallActivity extends AppCompatActivity {
-    private RtcEngine agoraEngine;
-    private String appId = "8923e482d091418bafb39b34f2417330";
-    private String channelName = "testChannel"; // Sẽ truyền động khi gọi
-    private int uid = 0;
-    private String token = null;
-    private String myUserId;
-    private String otherUserId;
+    private static final String TAG = "AudioCallActivity";
+    private static final int PERMISSION_REQUEST_CODE = 1;
+
+    private WebRTCClient webRTCClient;
+    private SignalingClient signalingClient;
+    private String callId;
+    private String currentUserId;
+    private String remoteUserId;
+    private boolean isInitiator;
+    private boolean isCallEnded = false;
+
+    private ImageButton endCallButton;
+    private ImageButton toggleMicButton;
+    private TextView callStatusText;
+    private boolean isMicMuted = false;
+
+    private DatabaseReference callRef;
+    private TextView userNameText;
+    private ImageView userAvatar;
+    private TextView callTimerText;
     private Handler timerHandler = new Handler();
-    private long callStartTime = 0;
-    private boolean isCounting = false;
-    private Runnable timerRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if (isCounting) {
-                long elapsed = SystemClock.elapsedRealtime() - callStartTime;
-                int seconds = (int) (elapsed / 1000);
-                int minutes = seconds / 60;
-                seconds = seconds % 60;
-                android.widget.TextView tvTimer = findViewById(R.id.tvTimer);
-                if (tvTimer != null) {
-                    tvTimer.setText(String.format("%02d:%02d", minutes, seconds));
-                }
-                timerHandler.postDelayed(this, 1000);
-            }
-        }
-    };
-    private DatabaseReference joinedRef;
-    private DatabaseReference otherJoinedRef;
-    private boolean otherJoined = false;
-    private boolean iJoined = false;
-    private ValueEventListener otherJoinedListener;
-    private DatabaseReference endRef;
-    private ValueEventListener endListener;
+    private long callStartTime = 0L;
+    private Runnable timerRunnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_audio_call); // Sử dụng layout chờ
-        android.widget.TextView tvStatus = findViewById(R.id.tvStatus);
-        tvStatus.setText("Đang gọi...");
-        ActivityCompat.requestPermissions(this, new String[]{
-                Manifest.permission.RECORD_AUDIO
-        }, 22);
-        if (getIntent().hasExtra("channelName")) {
-            channelName = getIntent().getStringExtra("channelName");
+        setContentView(R.layout.activity_audio_call);
+
+        // Get information from intent
+        callId = getIntent().getStringExtra("callId");
+        currentUserId = getIntent().getStringExtra("currentUserId");
+        remoteUserId = getIntent().getStringExtra("remoteUserId");
+        isInitiator = getIntent().getBooleanExtra("isInitiator", false);
+
+        // Initialize UI
+        initializeUI();
+
+        // Lắng nghe node cuộc gọi để tự động đóng khi bị xóa
+        if (isInitiator) {
+            // Caller lắng nghe node của remoteUserId (receiver)
+            callRef = FirebaseDatabase.getInstance().getReference().child("calls").child(remoteUserId);
+        } else {
+            // Receiver lắng nghe node của chính mình
+            callRef = FirebaseDatabase.getInstance().getReference().child("calls").child(currentUserId);
         }
-        // Hiển thị tên người nhận nếu có
-        String name = getIntent().getStringExtra("name");
-        if (name != null) {
-            android.widget.TextView tvName = findViewById(R.id.tvName);
-            tvName.setText(name);
-        }
-        myUserId = getIntent().getStringExtra("fromUserId");
-        otherUserId = getIntent().getStringExtra("toUserId");
-        Log.d("CALL_DEBUG", "AudioCallActivity onCreate: channelName=" + channelName + ", myUserId=" + myUserId + ", otherUserId=" + otherUserId);
-        // Gán uid duy nhất cho mỗi user
-        uid = getUidFromUserId(myUserId);
-        Log.d("AGORA_DEBUG", "onCreate: myUserId=" + myUserId + ", otherUserId=" + otherUserId + ", channelName=" + channelName + ", uid=" + uid);
-        android.widget.Button btnEndCall = findViewById(R.id.btnEndCall);
-        btnEndCall.setOnClickListener(v -> endCall());
-        setupAgoraEngine();
-        joinChannel();
-        // Chuẩn bị ref cho joined status
-        joinedRef = FirebaseDatabase.getInstance().getReference().child("calls_status").child(myUserId).child("joined");
-        otherJoinedRef = FirebaseDatabase.getInstance().getReference().child("calls_status").child(otherUserId).child("joined");
-        // Lắng nghe trạng thái joined của đối phương
-        otherJoinedListener = new ValueEventListener() {
+        callRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
-                Boolean joined = snapshot.getValue(Boolean.class);
-                if (joined != null && joined) {
-                    otherJoined = true;
-                    if (iJoined) {
-                        Log.d("AGORA_DEBUG", "Cả hai đã joined, chuyển sang layout đếm thời gian (Firebase)");
-                        switchToIncallLayout(name); // name đã lấy từ intent
-                        startCallTimer();
+                if (!snapshot.exists()) {
+                    if (!isFinishing()) {
+                        runOnUiThread(() -> {
+                            Toast.makeText(AudioCallActivity.this, "Cuộc gọi đã kết thúc!", Toast.LENGTH_SHORT).show();
+                            Intent intent = new Intent(AudioCallActivity.this, MessageActivity.class);
+                            intent.putExtra("toUserId", remoteUserId);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent);
+                            finish();
+                        });
+                    }
+                } else if (snapshot.child("status").exists()) {
+                    String status = snapshot.child("status").getValue(String.class);
+                    if ("accepted".equals(status)) {
+                        // Bắt đầu đếm thời gian khi call được accept
+                        if (callStartTime == 0L) {
+                            callStartTime = SystemClock.elapsedRealtime();
+                            timerRunnable = new Runnable() {
+                                @Override
+                                public void run() {
+                                    long elapsed = SystemClock.elapsedRealtime() - callStartTime;
+                                    int seconds = (int) (elapsed / 1000);
+                                    int minutes = seconds / 60;
+                                    seconds = seconds % 60;
+                                    if (callTimerText != null)
+                                        callTimerText.setText(String.format("%02d:%02d", minutes, seconds));
+                                    timerHandler.postDelayed(this, 1000);
+                                }
+                            };
+                            timerHandler.post(timerRunnable);
+                        }
+                        updateCallStatus("Đang gọi...");
+                    } else if ("declined".equals(status) || "ended".equals(status)) {
+                        if (!isFinishing()) {
+                            runOnUiThread(() -> {
+                                Toast.makeText(AudioCallActivity.this, "Cuộc gọi đã kết thúc!", Toast.LENGTH_SHORT).show();
+                                Intent intent = new Intent(AudioCallActivity.this, MessageActivity.class);
+                                intent.putExtra("toUserId", remoteUserId);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(intent);
+                                finish();
+                            });
+                        }
                     }
                 }
             }
             @Override
             public void onCancelled(DatabaseError error) {}
-        };
-        otherJoinedRef.addValueEventListener(otherJoinedListener);
-        // Lắng nghe end call
-        endRef = FirebaseDatabase.getInstance().getReference().child("calls_status").child(myUserId).child("end");
-        endListener = new ValueEventListener() {
+        });
+
+        // Check and request permissions
+        if (checkPermissions()) {
+            initializeWebRTC();
+        }
+
+        // Lấy tên đối phương từ Firebase
+        String showUserId = isInitiator ? remoteUserId : currentUserId;
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference().child("users").child(showUserId);
+        userRef.child("name").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
-                Boolean ended = snapshot.getValue(Boolean.class);
-                if (ended != null && ended) {
-                    Log.d("CALL_DEBUG", "Nhận tín hiệu end call, đóng activity");
-                    finish();
-                }
+                String name = snapshot.getValue(String.class);
+                if (name != null && userNameText != null) userNameText.setText(name);
             }
             @Override
             public void onCancelled(DatabaseError error) {}
-        };
-        endRef.addValueEventListener(endListener);
+        });
     }
 
-    private void setupAgoraEngine() {
-        try {
-            agoraEngine = RtcEngine.create(getBaseContext(), appId, new IRtcEngineEventHandler() {
-                @Override
-                public void onJoinChannelSuccess(String channel, int uid, int elapsed) {
-                    Log.d("AGORA_DEBUG", "onJoinChannelSuccess: channel=" + channel + ", uid=" + uid);
-                    iJoined = true;
-                    joinedRef.setValue(true);
-                    // Kiểm tra nếu đối phương đã join thì chuyển layout
-                    if (otherJoined) {
-                        runOnUiThread(() -> {
-                            String name = getIntent().getStringExtra("name");
-                            Log.d("AGORA_DEBUG", "Cả hai đã joined, chuyển sang layout đếm thời gian (onJoinChannelSuccess)");
-                            switchToIncallLayout(name);
-                            startCallTimer();
-                        });
+    private void initializeUI() {
+        endCallButton = findViewById(R.id.endCallButton);
+        toggleMicButton = findViewById(R.id.toggleMicButton);
+        callStatusText = findViewById(R.id.callStatusText);
+        userNameText = findViewById(R.id.userName);
+        userAvatar = findViewById(R.id.userAvatar);
+        callTimerText = findViewById(R.id.callTimerText);
+        if (callTimerText != null) callTimerText.setText("00:00");
+
+        endCallButton.setOnClickListener(v -> endCall());
+        toggleMicButton.setOnClickListener(v -> toggleMic());
+    }
+
+    private boolean checkPermissions() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.RECORD_AUDIO},
+                    PERMISSION_REQUEST_CODE);
+            return false;
+        }
+        return true;
+    }
+
+    private void initializeWebRTC() {
+        // Initialize WebRTCClient with callback implementation
+        webRTCClient = new WebRTCClient(this, new WebRTCClient.WebRTCClientCallback() {
+            @Override
+            public void onIceCandidateReceived(IceCandidate iceCandidate) {
+                if (!isCallEnded && signalingClient != null) {
+                    signalingClient.sendIceCandidate(iceCandidate);
+                }
+            }
+
+            @Override
+            public void onConnectionStateChanged(PeerConnection.PeerConnectionState state) {
+                runOnUiThread(() -> handleConnectionStateChange(state));
+            }
+
+            @Override
+            public void onLocalVideoTrackCreated(VideoTrack videoTrack) {
+                // Audio call doesn't need video track
+                Log.d(TAG, "Ignoring local video track in audio call");
+            }
+
+            @Override
+            public void onRemoteVideoTrackReceived(VideoTrack videoTrack) {
+                // Audio call doesn't need video track
+                Log.d(TAG, "Ignoring remote video track in audio call");
+            }
+        }, "audio");
+
+        // Initialize SignalingClient
+        signalingClient = new SignalingClient(callId, currentUserId, remoteUserId,
+                new SignalingClient.SignalingCallback() {
+                    @Override
+                    public void onOfferReceived(SessionDescription offer) {
+                        if (!isCallEnded && webRTCClient != null) {
+                            webRTCClient.setRemoteDescription(offer);
+                            // Create answer when offer is received
+                            createAnswer();
+                        }
                     }
-                }
-                @Override
-                public void onUserJoined(int uid, int elapsed) {
-                    Log.d("AGORA_DEBUG", "onUserJoined: uid=" + uid);
-                    otherJoined = true;
-                    // Kiểm tra nếu mình đã join thì chuyển layout
-                    if (iJoined) {
-                        runOnUiThread(() -> {
-                            String name = getIntent().getStringExtra("name");
-                            Log.d("AGORA_DEBUG", "Cả hai đã joined, chuyển sang layout đếm thời gian (onUserJoined)");
-                            switchToIncallLayout(name);
-                            startCallTimer();
-                        });
+
+                    @Override
+                    public void onAnswerReceived(SessionDescription answer) {
+                        if (!isCallEnded && webRTCClient != null) {
+                            webRTCClient.setRemoteDescription(answer);
+                        }
                     }
-                }
-                @Override
-                public void onUserOffline(int uid, int reason) {
-                    Log.d("AGORA_DEBUG", "onUserOffline: uid=" + uid);
-                    runOnUiThread(() -> {
-                        // Có thể chuyển lại layout cũ hoặc kết thúc call
-                        isCounting = false;
-                    });
-                }
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
+
+                    @Override
+                    public void onIceCandidateReceived(IceCandidate iceCandidate) {
+                        if (!isCallEnded && webRTCClient != null) {
+                            webRTCClient.addIceCandidate(iceCandidate);
+                        }
+                    }
+                });
+
+        // Initialize connection
+        webRTCClient.initializePeerConnection();
+
+        // Create offer if initiator
+        if (isInitiator) {
+            createOffer();
         }
     }
 
-    private void joinChannel() {
-        Log.d("AGORA_DEBUG", "joinChannel: channelName=" + channelName + ", uid=" + uid);
-        agoraEngine.enableAudio();
-        agoraEngine.disableVideo();
-        agoraEngine.joinChannel(token, channelName, "", uid);
+    private void createOffer() {
+        if (!isCallEnded && webRTCClient != null) {
+            webRTCClient.createOffer();
+            updateCallStatus("Đang kết nối...");
+        }
+    }
+
+    private void createAnswer() {
+        if (!isCallEnded && webRTCClient != null) {
+            webRTCClient.createAnswer();
+            updateCallStatus("Đang kết nối với người gọi...");
+        }
+    }
+
+    private void handleConnectionStateChange(PeerConnection.PeerConnectionState state) {
+        switch (state) {
+            case CONNECTED:
+                updateCallStatus("Đã kết nối");
+                break;
+            case DISCONNECTED:
+                updateCallStatus("Mất kết nối");
+                break;
+            case FAILED:
+                updateCallStatus("Kết nối thất bại");
+                Toast.makeText(this, "Kết nối thất bại", Toast.LENGTH_SHORT).show();
+                endCall();
+                break;
+        }
+    }
+
+    private void updateCallStatus(String status) {
+        runOnUiThread(() -> {
+            if (!isFinishing() && !isCallEnded && callStatusText != null) {
+                callStatusText.setText(status);
+            }
+        });
+    }
+
+    private void toggleMic() {
+        if (!isCallEnded && webRTCClient != null) {
+            isMicMuted = !isMicMuted;
+            webRTCClient.enableAudio(!isMicMuted);
+            toggleMicButton.setImageResource(isMicMuted ? 
+                R.drawable.ic_mic_off : R.drawable.ic_mic_on);
+        }
     }
 
     private void endCall() {
-        if (otherUserId != null && !otherUserId.isEmpty()) {
-            FirebaseDatabase.getInstance().getReference().child("calls_status").child(otherUserId).child("end").setValue(true);
-            FirebaseDatabase.getInstance().getReference().child("calls").child(otherUserId).removeValue();
+        if (isCallEnded) return;
+        isCallEnded = true;
+        // Xóa node của caller
+        if (currentUserId != null) {
+            FirebaseDatabase.getInstance().getReference().child("calls").child(currentUserId).removeValue();
         }
+        // Xóa node của receiver nếu status là 'ringing' (chưa accept/decline)
+        DatabaseReference remoteCallRef = FirebaseDatabase.getInstance().getReference().child("calls").child(remoteUserId);
+        remoteCallRef.child("status").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                String status = snapshot.getValue(String.class);
+                if ("ringing".equals(status) || status == null) {
+                    remoteCallRef.removeValue();
+                } else if ("accepted".equals(status) || "declined".equals(status)) {
+                    remoteCallRef.removeValue();
+                }
+            }
+            @Override
+            public void onCancelled(DatabaseError error) {}
+        });
+        String toUserId = remoteUserId;
+        if (toUserId == null) {
+            toUserId = getIntent().getStringExtra("remoteUserId");
+        }
+        if (toUserId == null) {
+            toUserId = getIntent().getStringExtra("callerId");
+        }
+        if (toUserId == null) {
+            toUserId = getIntent().getStringExtra("currentUserId");
+        }
+        Log.d("CALL_DEBUG", "AudioCallActivity endCall fallback, toUserId=" + toUserId);
+        // Trở về màn hình chat, truyền toUserId
+        Intent intent = new Intent(this, MessageActivity.class);
+        intent.putExtra("toUserId", toUserId);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
         finish();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                initializeWebRTC();
+            } else {
+                Toast.makeText(this, "Cần quyền truy cập microphone để thực hiện cuộc gọi", 
+                    Toast.LENGTH_SHORT).show();
+                endCall();
+            }
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        isCounting = false;
-        timerHandler.removeCallbacks(timerRunnable);
-        if (agoraEngine != null) {
-            agoraEngine.leaveChannel();
-            RtcEngine.destroy();
-            agoraEngine = null;
+        if (timerHandler != null && timerRunnable != null) timerHandler.removeCallbacks(timerRunnable);
+        // KHÔNG gọi endCall() ở đây nữa để tránh tự động kết thúc khi chỉ destroy activity
+        if (webRTCClient != null) {
+            webRTCClient.release();
         }
-        if (joinedRef != null) joinedRef.removeValue();
-        if (otherJoinedRef != null && otherJoinedListener != null) {
-            otherJoinedRef.removeEventListener(otherJoinedListener);
-        }
-        if (endRef != null && endListener != null) {
-            endRef.removeEventListener(endListener);
-            endRef.setValue(false);
+        if (signalingClient != null) {
+            // cleanup signaling nếu cần
         }
     }
 
-    private int getUidFromUserId(String userId) {
-        if (userId == null) return 0;
-        return Math.abs(userId.hashCode());
-    }
-
-    private void switchToIncallLayout(String name) {
-        Log.d("CALL_DEBUG", "switchToIncallLayout được gọi: name=" + name);
-        setContentView(R.layout.activity_audio_call_incall);
-        Log.d("CALL_DEBUG", "setContentView activity_audio_call_incall thành công");
-        android.widget.TextView tvName = findViewById(R.id.tvName);
-        Log.d("CALL_DEBUG", "findViewById tvName: " + (tvName != null));
-        if (name != null && tvName != null) tvName.setText(name);
-        android.widget.Button btnEndCall = findViewById(R.id.btnEndCall);
-        Log.d("CALL_DEBUG", "findViewById btnEndCall: " + (btnEndCall != null));
-        if (btnEndCall != null) btnEndCall.setOnClickListener(v -> endCall());
-        startCallTimer();
-    }
-
-    private void startCallTimer() {
-        if (!isCounting) {
-            isCounting = true;
-            callStartTime = SystemClock.elapsedRealtime();
-            timerHandler.post(timerRunnable);
-        }
+    @Override
+    public void onBackPressed() {
+        endCall();
+        super.onBackPressed();
     }
 } 
