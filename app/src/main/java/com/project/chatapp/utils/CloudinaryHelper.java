@@ -38,7 +38,7 @@ public class CloudinaryHelper {
 
     public static void uploadMedia(Context context, String filePath, UploadCallback callback) {
         init(context);
-        
+
         File file = new File(filePath);
         if (!file.exists()) {
             Log.e(TAG, "File does not exist: " + filePath);
@@ -48,49 +48,59 @@ public class CloudinaryHelper {
 
         String extension = MimeTypeMap.getFileExtensionFromUrl(filePath);
         Log.d(TAG, "File extension: " + extension);
-        
-        String resourceType = extension != null && 
-            (extension.equals("mp4") || extension.equals("mov") || extension.equals("3gp")) 
-            ? "video" : "image";
-        Log.d(TAG, "Resource type: " + resourceType);
+
+        String resourceType = "auto";
+        if (extension != null) {
+            if (extension.equals("mp3") || extension.equals("m4a") || extension.equals("aac")) {
+                resourceType = "video";
+            } else if (extension.equals("mp4") || extension.equals("mov") || extension.equals("3gp")) {
+                resourceType = "video";
+            } else {
+                resourceType = "image";
+            }
+        }
+
+        Log.d(TAG, "Using resource_type: " + resourceType);
 
         try {
             MediaManager.get().upload(filePath)
-                .option("resource_type", resourceType)
-                .callback(new com.cloudinary.android.callback.UploadCallback() {
-                    @Override
-                    public void onStart(String requestId) {
-                        Log.d(TAG, "Upload started. Request ID: " + requestId);
-                    }
+                    .option("resource_type", resourceType)
+                    .callback(new com.cloudinary.android.callback.UploadCallback() {
+                        @Override
+                        public void onStart(String requestId) {
+                            Log.d(TAG, "Upload started. Request ID: " + requestId);
+                        }
 
-                    @Override
-                    public void onProgress(String requestId, long bytes, long totalBytes) {
-                        int progress = (int) ((bytes * 100) / totalBytes);
-                        Log.d(TAG, "Upload progress: " + progress + "%");
-                    }
+                        @Override
+                        public void onProgress(String requestId, long bytes, long totalBytes) {
+                            int progress = (int) ((bytes * 100) / totalBytes);
+                            Log.d(TAG, "Upload progress: " + progress + "%");
+                        }
 
-                    @Override
-                    public void onSuccess(String requestId, Map resultData) {
-                        String url = (String) resultData.get("url");
-                        Log.d(TAG, "Upload success. URL: " + url);
-                        callback.onSuccess(url);
-                    }
+                        @Override
+                        public void onSuccess(String requestId, Map resultData) {
+                            String url = (String) resultData.get("url");
+                            Log.d(TAG, "Upload success. URL: " + url);
+                            callback.onSuccess(url);
+                        }
 
-                    @Override
-                    public void onError(String requestId, ErrorInfo error) {
-                        Log.e(TAG, "Upload error: " + error.getDescription());
-                        callback.onError(error.getDescription());
-                    }
+                        @Override
+                        public void onError(String requestId, ErrorInfo error) {
+                            Log.e(TAG, "Upload error: " + error.getDescription());
+                            callback.onError(error.getDescription());
+                        }
 
-                    @Override
-                    public void onReschedule(String requestId, ErrorInfo error) {
-                        Log.w(TAG, "Upload rescheduled: " + error.getDescription());
-                    }
-                })
-                .dispatch();
+                        @Override
+                        public void onReschedule(String requestId, ErrorInfo error) {
+                            Log.w(TAG, "Upload rescheduled: " + error.getDescription());
+                        }
+                    })
+                    .dispatch();
         } catch (Exception e) {
             Log.e(TAG, "Error dispatching upload: " + e.getMessage());
             callback.onError("Error starting upload: " + e.getMessage());
         }
     }
+
+
 } 

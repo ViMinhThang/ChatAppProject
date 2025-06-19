@@ -1,14 +1,14 @@
 {
   "project_info": {
-    "project_number": "749533198056",
-    "firebase_url": "https://chatapplication-88ee7-default-rtdb.asia-southeast1.firebasedatabase.app",
-    "project_id": "chatapplication-88ee7",
-    "storage_bucket": "chatapplication-88ee7.firebasestorage.app"
+    "project_number": "51991175233",
+    "firebase_url": "https://chatappproject-31d50-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "chatappproject-31d50",
+    "storage_bucket": "chatappproject-31d50.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:749533198056:android:0a1857663028039d66bb5d",
+        "mobilesdk_app_id": "1:51991175233:android:e394d0fe8c61e04901e6c0",
         "android_client_info": {
           "package_name": "com.project.chatapp"
         }
@@ -16,7 +16,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyASN9J2F5HL7Moy9vVHJ8Rtf_Spt8moh0I"
+          "current_key": "AIzaSyBl51m2076ZhnXVi5pywkgtE1wHAjvt7Ts"
         }
       ],
       "services": {

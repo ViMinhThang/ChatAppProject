@@ -2,13 +2,11 @@ package com.project.chatapp.screen.chat;
 
 import android.Manifest;
 import android.os.Bundle;
-import android.widget.FrameLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.util.Log;
-
 import com.project.chatapp.R;
 
 import io.agora.rtc2.*;
@@ -20,7 +18,7 @@ import com.google.firebase.database.ValueEventListener;
 
 public class AudioCallActivity extends AppCompatActivity {
     private RtcEngine agoraEngine;
-    private String appId = "c063b998752f4600801538aa38f12e56";
+    private String appId = "8923e482d091418bafb39b34f2417330";
     private String channelName = "testChannel"; // Sẽ truyền động khi gọi
     private int uid = 0;
     private String token = null;
